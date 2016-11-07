@@ -4,15 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.github.malow.gladiatorarena.server.database.Player;
+import com.github.malow.malowlib.MaloWLogger;
 
 public class MatchmakerHandler
 {
   private static List<Player> playerQueue = new ArrayList<Player>();
 
-  public static void Queue(Player player)
+  public static void queue(Player player)
   {
     synchronized (playerQueue)
     {
+      if (playerQueue.contains(player))
+      {
+        MaloWLogger.error("Player tried to queue but was already in queue: " + player.username, new Exception());
+        return;
+      }
+
       Player other = findOpponent(player);
       if (other != null)
       {
@@ -26,7 +33,7 @@ public class MatchmakerHandler
     }
   }
 
-  public static void DeQueue(Player player)
+  public static void unqueue(Player player)
   {
     synchronized (playerQueue)
     {
@@ -34,6 +41,14 @@ public class MatchmakerHandler
       {
         playerQueue.remove(player);
       }
+    }
+  }
+
+  public static void clearQueue()
+  {
+    synchronized (playerQueue)
+    {
+      playerQueue.clear();
     }
   }
 

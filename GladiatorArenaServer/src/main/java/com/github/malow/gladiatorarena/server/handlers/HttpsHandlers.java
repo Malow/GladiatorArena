@@ -1,46 +1,54 @@
 package com.github.malow.gladiatorarena.server.handlers;
 
 import com.github.malow.accountserver.comstructs.AuthorizedRequest;
-import com.github.malow.accountserver.comstructs.ErrorResponse;
 import com.github.malow.accountserver.comstructs.Response;
+import com.github.malow.gladiatorarena.server.database.PlayerAccessor;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.network.https.HttpsPostHandler;
 
 public class HttpsHandlers
 {
-  public static class GetMyInfoHandler extends HttpsPostHandler
+  public static class ClearCacheHandler extends HttpsPostHandler
   {
     @Override
     public String handleRequestAndGetResponse(String request)
     {
+      PlayerAccessor.clearCache();
+      MatchmakerHandler.clearQueue();
+      return GsonSingleton.get().toJson(new Response(true));
+    }
+  }
+
+  public static class GetMyInfoHandler extends HttpsPostHandler
+  {
+    @Override
+    public String handleRequestAndGetResponse(String request) throws BadRequestException
+    {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
-      if (req != null)
-      {
-        Response resp = PlayerHandler.getMyInfo(req);
-        return GsonSingleton.get().toJson(resp);
-      }
-      else
-      {
-        return GsonSingleton.get().toJson(new ErrorResponse(false, "Request has wrong parameters"));
-      }
+      Response resp = PlayerHandler.getMyInfo(req);
+      return GsonSingleton.get().toJson(resp);
     }
   }
 
   public static class QueueMatchmakingHandler extends HttpsPostHandler
   {
     @Override
-    public String handleRequestAndGetResponse(String request)
+    public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
-      if (req != null)
-      {
-        Response resp = PlayerHandler.queueMatchmaking(req);
-        return GsonSingleton.get().toJson(resp);
-      }
-      else
-      {
-        return GsonSingleton.get().toJson(new ErrorResponse(false, "Request has wrong parameters"));
-      }
+      Response resp = PlayerHandler.queueMatchmaking(req);
+      return GsonSingleton.get().toJson(resp);
+    }
+  }
+
+  public static class UnqueueMatchmakingHandler extends HttpsPostHandler
+  {
+    @Override
+    public String handleRequestAndGetResponse(String request) throws BadRequestException
+    {
+      AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
+      Response resp = PlayerHandler.UnqueueMatchmaking(req);
+      return GsonSingleton.get().toJson(resp);
     }
   }
 }

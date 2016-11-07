@@ -6,33 +6,29 @@ import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
 import com.github.malow.gladiatorarena.server.handlers.GameInstanceHandler;
+import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.ClearCacheHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.GetMyInfoHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.QueueMatchmakingHandler;
+import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.UnqueueMatchmakingHandler;
 import com.github.malow.malowlib.network.https.HttpsPostServer;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
 
 public class GladiatorArenaServer
 {
+  private static SocketListener socketListener;
+  private static HttpsPostServer gameHttpsServer;
+
   public static void main(String[] args)
   {
-    // Setup SocketListener and GameInstanceHandler
-    GameInstanceHandler.getInstance().start();
-    SocketListener socketListener = new SocketListener(8000);
-    socketListener.start();
+    GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
 
-    // Setup AccountServer
     HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, "https_key.jks", "password");
     AccountServerConfig accountServerConfig = new AccountServerConfig("GladiatorArenaServer", "GladArUsr", "password", accountServerHttpsConfig,
         "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
-    accountServerConfig.enableEmailSending = false;
-    AccountServer.start(accountServerConfig);
 
-    // Setup GameHttpsServer
     HttpsPostServerConfig gameConfig = new HttpsPostServerConfig(7001, "https_key.jks", "password");
-    HttpsPostServer gameHttpsServer = new HttpsPostServer(gameConfig);
-    gameHttpsServer.createContext("/getmyinfo", new GetMyInfoHandler());
-    gameHttpsServer.createContext("/queuematchmaking", new QueueMatchmakingHandler());
-    gameHttpsServer.start();
+
+    startServer(gladConfig, accountServerConfig, gameConfig);
 
     String input = "";
     Scanner in = new Scanner(System.in);
@@ -43,6 +39,33 @@ public class GladiatorArenaServer
     }
     in.close();
 
+    closeServer();
+  }
+
+  public static void startServer(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServerConfig gameConfig)
+  {
+    // Setup SocketListener and GameInstanceHandler
+    GameInstanceHandler.getInstance().start();
+    socketListener = new SocketListener(7002);
+    socketListener.start();
+
+    // Start AccountServer
+    AccountServer.start(accountServerConfig);
+
+    // Start HttpsGameApiServer
+    gameHttpsServer = new HttpsPostServer(gameConfig);
+    gameHttpsServer.createContext("/getmyinfo", new GetMyInfoHandler());
+    gameHttpsServer.createContext("/queuematchmaking", new QueueMatchmakingHandler());
+    gameHttpsServer.createContext("/unqueuematchmaking", new UnqueueMatchmakingHandler());
+    if (gladConfig.allowClearCacheOperation)
+    {
+      gameHttpsServer.createContext("/clearcache", new ClearCacheHandler());
+    }
+    gameHttpsServer.start();
+  }
+
+  public static void closeServer()
+  {
     AccountServer.close();
     gameHttpsServer.close();
     socketListener.close();

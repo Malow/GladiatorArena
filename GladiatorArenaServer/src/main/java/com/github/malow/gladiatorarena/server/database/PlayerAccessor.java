@@ -83,4 +83,8 @@ public class PlayerAccessor
     cacheByAccountId.put(player.accountId, player);
   }
 
+  public static void clearCache()
+  {
+    cacheByAccountId.clear();
+  }
 }
