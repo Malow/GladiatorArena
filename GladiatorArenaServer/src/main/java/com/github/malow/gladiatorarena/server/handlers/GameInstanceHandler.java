@@ -70,6 +70,12 @@ public class GameInstanceHandler extends MaloWProcess
     }
   }
 
+  public static void deleteGame(Long matchId)
+  {
+    MaloWLogger.info("Deleting game: " + matchId);
+    games.remove(matchId);
+  }
+
   @Override
   public void life()
   {

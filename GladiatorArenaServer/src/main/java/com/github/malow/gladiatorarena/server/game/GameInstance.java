@@ -14,6 +14,7 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Sock
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketGameStateUpdateRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
+import com.github.malow.gladiatorarena.server.handlers.GameInstanceHandler;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.MaloWProcess;
@@ -222,6 +223,7 @@ public class GameInstance extends MaloWProcess
       MaloWLogger.error("Failed to update match " + match.id, e);
     }
     this.close();
+    GameInstanceHandler.deleteGame(this.match.id);
   }
 
   private void calculateAndSetRatings(ConnectedPlayer winner)
@@ -245,5 +247,9 @@ public class GameInstance extends MaloWProcess
   @Override
   public void closeSpecific()
   {
+    if (this.player1.client != null) this.player1.client.close();
+    if (this.player2.client != null) this.player2.client.close();
+    if (this.player1.client != null) this.player1.client.waitUntillDone();
+    if (this.player2.client != null) this.player2.client.waitUntillDone();
   }
 }
