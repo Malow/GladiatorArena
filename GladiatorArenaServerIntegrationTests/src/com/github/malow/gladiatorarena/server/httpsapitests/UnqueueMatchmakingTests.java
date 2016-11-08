@@ -1,4 +1,4 @@
-package com.github.malow.gladiatorarena.server.apitests;
+package com.github.malow.gladiatorarena.server.httpsapitests;
 
 import static org.junit.Assert.assertEquals;
 
@@ -10,51 +10,44 @@ import com.github.malow.accountserver.comstructs.Response;
 import com.github.malow.gladiatorarena.server.ErrorMessages;
 import com.github.malow.gladiatorarena.server.testhelpers.ServerConnection;
 import com.github.malow.gladiatorarena.server.testhelpers.TestHelpers;
-import com.github.malow.gladiatorarena.server.testhelpers.User;
+import com.github.malow.gladiatorarena.server.testhelpers.TestUsers;
 import com.github.malow.malowlib.GsonSingleton;
 
 public class UnqueueMatchmakingTests
 {
-  private static final User TEST_USER = new User("tester@test.com", null, "testerpw", null);
-
   @Before
   public void setup() throws Exception
   {
     TestHelpers.beforeTest();
-    TEST_USER.authToken = TestHelpers.loginAndGetAuthToken(TEST_USER);
-    ServerConnection.getMyInfo(TEST_USER);
   }
 
   @Test
   public void testUnqueueMatchmakingSuccessfully() throws Exception
   {
-    ServerConnection.queueMatchmaking(TEST_USER);
-    String jsonResponse = ServerConnection.unqueueMatchmaking(TEST_USER);
+    ServerConnection.queueMatchmaking(TestUsers.USER1);
+    String jsonResponse = ServerConnection.unqueueMatchmaking(TestUsers.USER1);
     Response response = GsonSingleton.get().fromJson(jsonResponse, Response.class);
-    assertEquals(response.result, true);
+    assertEquals(true, response.result);
   }
 
   @Test
   public void testUnqueueMatchmakingFailsWhenNotQueued() throws Exception
   {
-    String jsonResponse = ServerConnection.unqueueMatchmaking(TEST_USER);
+    String jsonResponse = ServerConnection.unqueueMatchmaking(TestUsers.USER1);
     ErrorResponse response = GsonSingleton.get().fromJson(jsonResponse, ErrorResponse.class);
-    assertEquals(response.result, false);
-    assertEquals(response.error, ErrorMessages.NOT_IN_QUEUE);
+    assertEquals(false, response.result);
+    assertEquals(ErrorMessages.NOT_IN_QUEUE, response.error);
   }
 
   @Test
   public void testUnqueueMatchmakingFailsWhenAlreadyHaveOngoingMatch() throws Exception
   {
-    ServerConnection.queueMatchmaking(TEST_USER);
-    User user2 = new User("tester2@test.com", null, "testerpw", null);
-    user2.authToken = TestHelpers.loginAndGetAuthToken(user2);
-    ServerConnection.getMyInfo(user2);
-    ServerConnection.queueMatchmaking(user2);
+    ServerConnection.queueMatchmaking(TestUsers.USER1);
+    ServerConnection.queueMatchmaking(TestUsers.USER2);
 
-    String jsonResponse = ServerConnection.unqueueMatchmaking(TEST_USER);
+    String jsonResponse = ServerConnection.unqueueMatchmaking(TestUsers.USER1);
     ErrorResponse response = GsonSingleton.get().fromJson(jsonResponse, ErrorResponse.class);
-    assertEquals(response.result, false);
-    assertEquals(response.error, ErrorMessages.ALREADY_HAVE_A_MATCH);
+    assertEquals(false, response.result);
+    assertEquals(ErrorMessages.ALREADY_HAVE_A_MATCH, response.error);
   }
 }

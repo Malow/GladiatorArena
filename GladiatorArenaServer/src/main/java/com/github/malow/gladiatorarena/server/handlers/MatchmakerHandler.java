@@ -3,6 +3,7 @@ package com.github.malow.gladiatorarena.server.handlers;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
 import com.github.malow.gladiatorarena.server.database.Player;
 import com.github.malow.malowlib.MaloWLogger;
 
@@ -56,7 +57,7 @@ public class MatchmakerHandler
   {
     for (Player other : playerQueue)
     {
-      if (Math.abs(other.rating - player.rating) < 100) { return other; }
+      if (Math.abs(other.rating - player.rating) <= GladiatorArenaServerConfig.MATCHMAKING_MAX_RATING_DIFFERENCE) { return other; }
     }
     return null;
   }

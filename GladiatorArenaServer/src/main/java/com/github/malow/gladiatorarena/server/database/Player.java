@@ -1,6 +1,7 @@
 package com.github.malow.gladiatorarena.server.database;
 
 import com.github.malow.accountserver.database.Account;
+import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
 
 public class Player
 {
@@ -11,7 +12,7 @@ public class Player
   public Integer rating;
 
   // Only cached in memory
-  public Integer currentMatchId;
+  public Long currentMatchId;
   public boolean isSearchingForGame;
 
   public Player()
@@ -23,7 +24,7 @@ public class Player
   {
     this.accountId = acc.id;
     this.username = acc.username;
-    this.rating = 0;
+    this.rating = GladiatorArenaServerConfig.DEFAULT_RATING;
   }
 
   public Player(Long id, Long accountId, String username, Integer rating)

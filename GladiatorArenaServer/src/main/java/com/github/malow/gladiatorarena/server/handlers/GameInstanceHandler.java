@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.database.AccountAccessor.WrongAuthentificationTokenException;
+import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
 import com.github.malow.gladiatorarena.server.database.Match;
 import com.github.malow.gladiatorarena.server.database.MatchAccessor;
 import com.github.malow.gladiatorarena.server.database.Player;
@@ -24,7 +25,6 @@ import com.github.malow.malowlib.network.NetworkChannel;
 
 public class GameInstanceHandler extends MaloWProcess
 {
-  public static final String REQUEST_NAME = "JoinGame";
   private static ConcurrentHashMap<Long, GameInstance> games = new ConcurrentHashMap<Long, GameInstance>();
   private static GameInstanceHandler INSTANCE;
 
@@ -49,8 +49,8 @@ public class GameInstanceHandler extends MaloWProcess
       match = MatchAccessor.create(match);
       p1.isSearchingForGame = false;
       p2.isSearchingForGame = false;
-      p1.currentMatchId = 1;
-      p2.currentMatchId = 1;
+      p1.currentMatchId = match.id;
+      p2.currentMatchId = match.id;
       PlayerAccessor.updateCacheOnly(p1);
       PlayerAccessor.updateCacheOnly(p2);
 
@@ -80,7 +80,7 @@ public class GameInstanceHandler extends MaloWProcess
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
         SocketJoinGameRequest req = GsonSingleton.get().fromJson(packet.message, SocketJoinGameRequest.class);
-        if (req != null && req.isValid() && req.method.equals(REQUEST_NAME))
+        if (req != null && req.isValid() && req.method.equals(GladiatorArenaServerConfig.JOIN_GAME_REQUEST_NAME))
         {
           this.handleRequest(req, packet.client);
         }
@@ -123,7 +123,6 @@ public class GameInstanceHandler extends MaloWProcess
     if (nc instanceof Client)
     {
       Client client = (Client) nc;
-      MaloWLogger.info("New client added to GameInstanceHandler: " + client.getChannelID());
       client.setNotifier(this);
       client.start();
       synchronized (this.clients)

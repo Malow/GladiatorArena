@@ -1,16 +1,11 @@
 package com.github.malow.gladiatorarena.server.database;
 
-import java.util.Date;
+import java.util.Calendar;
+
+import com.github.malow.gladiatorarena.server.game.GameStatus;
 
 public class Match
 {
-  public static class MatchStatus
-  {
-    public static final int NOT_STARTED = 0;
-    public static final int IN_PROGRESS = 1;
-    public static final int COMPLETED = 2;
-  }
-
   // Persisted in database
   public Long id;
   public Long player1Id;
@@ -19,12 +14,12 @@ public class Match
   public String username2;
   public Integer ratingBeforePlayer1;
   public Integer ratingBeforePlayer2;
-  public Date created;
-  public Integer status;
-  public boolean player1Won;
+  public Calendar createdAt;
+  public GameStatus status;
+  public String winnerUsername;
   public Integer ratingChangePlayer1;
   public Integer ratingChangePlayer2;
-  public Date finished;
+  public Calendar finishedAt;
 
   public Match(Long id, Player p1, Player p2)
   {
@@ -35,7 +30,7 @@ public class Match
     this.username2 = p2.username;
     this.ratingBeforePlayer1 = p1.rating;
     this.ratingBeforePlayer2 = p2.rating;
-    this.status = MatchStatus.NOT_STARTED;
-    this.created = new Date();
+    this.status = GameStatus.NOT_STARTED;
+    this.createdAt = Calendar.getInstance();
   }
 }

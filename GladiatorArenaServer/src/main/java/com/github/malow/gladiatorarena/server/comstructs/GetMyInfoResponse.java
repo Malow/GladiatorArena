@@ -7,7 +7,7 @@ public class GetMyInfoResponse extends Response
 {
   public String username;
   public Integer rating;
-  public Integer currentMatchId;
+  public Long currentMatchId;
   public boolean isSearchingForGame;
 
   public GetMyInfoResponse(boolean result, Player player)
@@ -19,7 +19,7 @@ public class GetMyInfoResponse extends Response
     this.isSearchingForGame = player.isSearchingForGame;
   }
 
-  public GetMyInfoResponse(boolean result, String username, Integer rating, Integer currentMatchId, boolean isSearchingForGame)
+  public GetMyInfoResponse(boolean result, String username, Integer rating, Long currentMatchId, boolean isSearchingForGame)
   {
     super(result);
     this.username = username;

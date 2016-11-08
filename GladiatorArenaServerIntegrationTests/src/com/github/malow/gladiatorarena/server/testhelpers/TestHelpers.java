@@ -17,6 +17,11 @@ public class TestHelpers
     resetDatabaseTable("players");
     resetDatabaseTable("matches");
     ServerConnection.clearCache();
+
+    TestUsers.USER1.authToken = loginAndGetAuthToken(TestUsers.USER1);
+    ServerConnection.getMyInfo(TestUsers.USER1);
+    TestUsers.USER2.authToken = loginAndGetAuthToken(TestUsers.USER2);
+    ServerConnection.getMyInfo(TestUsers.USER2);
   }
 
   public static String loginAndGetAuthToken(User user) throws Exception

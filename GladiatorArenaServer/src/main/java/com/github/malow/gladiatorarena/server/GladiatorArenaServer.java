@@ -74,3 +74,17 @@ public class GladiatorArenaServer
     GameInstanceHandler.getInstance().waitUntillDone();
   }
 }
+
+/*
+Client1 -> Server: ready -> Response: true
+Client2 -> Server: ready -> Response: true
+Server -> Clients: MapData(double array with ints to represent tiles) -> Response: true
+Server -> Clients: GameState(List of mercenaries, their positions, current healths etc.) -> Response: true
+Client1 -> Server: ActionMove(mercId, list<Coords> path) -> Response: true
+Server -> Client2: UpdateMove(mercId, Coords newPos) -> Response: true
+Client1 -> Server: ActionAttack(mercId, Coords tile) -> Response: true
+Server -> Client2: UpdateAttack(mercId from, mercId target, int targetNewHealth) -> Response: true
+Client1 -> Server: ReadyForNextTurn -> Response: true
+Client2 -> Server: ReadyForNextTurn -> Response: true
+Server -> Clients: GameState(List of mercenaries, their positions, current healths etc.) -> Response: true
+*/

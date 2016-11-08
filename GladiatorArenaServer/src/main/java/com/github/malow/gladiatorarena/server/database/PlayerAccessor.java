@@ -78,6 +78,34 @@ public class PlayerAccessor
     return null;
   }
 
+  public static boolean update(Player player) throws UnexpectedException
+  {
+    try
+    {
+      PreparedStatement s1 = Database.getConnection().prepareStatement("UPDATE Players SET account_id = ?, username = ?, rating = ? WHERE id = ?;");
+      int i = 1;
+      s1.setLong(i++, player.accountId);
+      s1.setString(i++, player.username);
+      s1.setInt(i++, player.rating);
+      s1.setLong(i++, player.id);
+      int rowCount = s1.executeUpdate();
+      s1.close();
+
+      if (rowCount == 1)
+      {
+        cacheByAccountId.put(player.accountId, player);
+        return true;
+      }
+    }
+    catch (Exception e)
+    {
+      UnexpectedException ue = new UnexpectedException(e.toString());
+      ue.setStackTrace(e.getStackTrace());
+      throw ue;
+    }
+    return false;
+  }
+
   public static void updateCacheOnly(Player player)
   {
     cacheByAccountId.put(player.accountId, player);

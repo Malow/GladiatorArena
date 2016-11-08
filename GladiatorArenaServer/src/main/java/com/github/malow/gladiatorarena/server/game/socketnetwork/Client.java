@@ -11,6 +11,9 @@ public class Client extends NetworkChannel
   public String email;
   public String authToken;
 
+  // Game logic
+  public boolean ready;
+
   public Client(Socket socket)
   {
     super(socket);
