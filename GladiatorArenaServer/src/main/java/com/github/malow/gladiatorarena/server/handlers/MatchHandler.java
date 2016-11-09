@@ -23,25 +23,25 @@ import com.github.malow.malowlib.MaloWProcess;
 import com.github.malow.malowlib.ProcessEvent;
 import com.github.malow.malowlib.network.NetworkChannel;
 
-public class GameInstanceHandler extends MaloWProcess
+public class MatchHandler extends MaloWProcess
 {
   private static ConcurrentHashMap<Long, GameInstance> games = new ConcurrentHashMap<Long, GameInstance>();
-  private static GameInstanceHandler INSTANCE;
+  private static MatchHandler INSTANCE;
 
   private List<Client> clients;
 
-  private GameInstanceHandler()
+  private MatchHandler()
   {
     this.clients = new ArrayList<Client>();
   }
 
-  public static GameInstanceHandler getInstance()
+  public static MatchHandler getInstance()
   {
-    if (INSTANCE == null) INSTANCE = new GameInstanceHandler();
+    if (INSTANCE == null) INSTANCE = new MatchHandler();
     return INSTANCE;
   }
 
-  public static void createGame(Player p1, Player p2)
+  public static void createNewMatch(Player p1, Player p2)
   {
     try
     {
@@ -70,7 +70,7 @@ public class GameInstanceHandler extends MaloWProcess
     }
   }
 
-  public static void deleteGame(Long matchId)
+  public static void deleteEndedMatch(Long matchId)
   {
     MaloWLogger.info("Deleting game: " + matchId);
     games.remove(matchId);
@@ -104,8 +104,6 @@ public class GameInstanceHandler extends MaloWProcess
     {
       Long accId = AccountServer.checkAuthentication(req.email, req.authToken);
       client.accId = accId;
-      client.email = req.email;
-      client.authToken = req.authToken;
       GameInstance game = games.get(req.gameId);
       if (game != null && game.clientConnected(client))
       {

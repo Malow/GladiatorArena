@@ -25,7 +25,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = PlayerHandler.getMyInfo(req);
+      Response resp = HttpsGameApiHandler.getMyInfo(req);
       return GsonSingleton.get().toJson(resp);
     }
   }
@@ -36,7 +36,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = PlayerHandler.queueMatchmaking(req);
+      Response resp = HttpsGameApiHandler.queueMatchmaking(req);
       return GsonSingleton.get().toJson(resp);
     }
   }
@@ -47,7 +47,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = PlayerHandler.UnqueueMatchmaking(req);
+      Response resp = HttpsGameApiHandler.UnqueueMatchmaking(req);
       return GsonSingleton.get().toJson(resp);
     }
   }

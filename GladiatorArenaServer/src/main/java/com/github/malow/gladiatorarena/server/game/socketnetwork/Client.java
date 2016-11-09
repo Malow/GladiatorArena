@@ -7,27 +7,14 @@ import com.github.malow.malowlib.network.NetworkChannel;
 
 public class Client extends NetworkChannel
 {
+  public boolean ready = false;
   public Long accId;
-  public String email;
-  public String authToken;
 
-  // Game logic
-  public boolean ready;
+  public boolean disconnected = false;
 
   public Client(Socket socket)
   {
     super(socket);
-    this.accId = null;
-    this.email = null;
-    this.authToken = null;
-  }
-
-  public Client(Socket socket, Long accId, String email, String authToken)
-  {
-    super(socket);
-    this.accId = accId;
-    this.email = email;
-    this.authToken = authToken;
   }
 
   @Override

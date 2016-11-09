@@ -1,6 +1,9 @@
 package com.github.malow.gladiatorarena.server.game;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Optional;
 
 import com.github.malow.accountserver.database.Database.UnexpectedException;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
@@ -14,7 +17,7 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Sock
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketGameStateUpdateRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
-import com.github.malow.gladiatorarena.server.handlers.GameInstanceHandler;
+import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.MaloWProcess;
@@ -22,37 +25,38 @@ import com.github.malow.malowlib.ProcessEvent;
 
 public class GameInstance extends MaloWProcess
 {
-  private ConnectedPlayer player1;
-  private ConnectedPlayer player2;
+  private List<Player> players;
+  private List<Client> clients;
   private Match match;
+
+  private Calendar roundStartedAt;
+  private GameStatus status;
+
+  private Calendar endedAt;
 
   public GameInstance(Player p1, Player p2, Match match)
   {
-    this.player1 = new ConnectedPlayer(p1);
-    this.player2 = new ConnectedPlayer(p2);
+    this.status = GameStatus.NOT_STARTED;
+    this.players = new ArrayList<Player>();
+    this.players.add(p1);
+    this.players.add(p2);
     this.match = match;
+    this.clients = new ArrayList<Client>();
   }
 
   public boolean clientConnected(Client client)
   {
-    if (client.accId.equals(this.player1.player.accountId))
+    Optional<Player> matchingPlayer = this.players.stream().filter(p -> p.accountId.equals(client.accId)).findFirst();
+    if (matchingPlayer.isPresent())
     {
-      if (this.player1.client != null)
+      Optional<Client> matchingClient = this.clients.stream().filter(c -> c.accId.equals(client.accId)).findFirst();
+      if (matchingClient.isPresent())
       {
-        this.player1.client.setNotifier(null);
-        this.player1.client.close();
+        matchingClient.get().setNotifier(null);
+        matchingClient.get().close();
+        this.clients.remove(matchingClient.get());
       }
-      this.player1.client = client;
-      return true;
-    }
-    else if (client.accId.equals(this.player2.player.accountId))
-    {
-      if (this.player2.client != null)
-      {
-        this.player2.client.setNotifier(null);
-        this.player2.client.close();
-      }
-      this.player2.client = client;
+      this.clients.add(client);
       return true;
     }
     return false;
@@ -61,15 +65,8 @@ public class GameInstance extends MaloWProcess
   @Override
   public void life()
   {
-    boolean gameStarted = false;
-    long lastTime = System.nanoTime();
-    long currentTime;
-    long diff;
     while (this.stayAlive)
     {
-      currentTime = System.nanoTime();
-      diff = currentTime - lastTime;
-      lastTime = currentTime;
       ProcessEvent ev = this.peekEvent();
       while (ev != null)
       {
@@ -80,14 +77,15 @@ public class GameInstance extends MaloWProcess
         }
         ev = this.peekEvent();
       }
-      if (!gameStarted)
+      if (this.status == GameStatus.NOT_STARTED)
       {
-        gameStarted = startGame();
-        if (!gameStarted)
+        tryStartGame();
+        if (this.status == GameStatus.NOT_STARTED)
         {
-          if (checkTimedOut(diff))
+          if (checkTimedOut(this.match.createdAt, GladiatorArenaServerConfig.PRE_GAME_TIMEOUT_SECONDS))
           {
-            endGame(GameStatus.TIMED_OUT, null);
+            this.status = GameStatus.TIMED_OUT;
+            endGame(null);
           }
           else
           {
@@ -102,49 +100,55 @@ public class GameInstance extends MaloWProcess
           }
         }
       }
+      else if (this.status == GameStatus.IN_PROGRESS)
+      {
+        updateGame();
+      }
       else
       {
-        updateGame(diff);
+        if (this.clients.stream().allMatch(c -> c.disconnected) || checkTimedOut(this.endedAt, GladiatorArenaServerConfig.POST_GAME_DURATION_SECONDS))
+        {
+          this.close();
+        }
       }
     }
   }
 
-  private boolean checkTimedOut(long diff)
+  private boolean checkTimedOut(Calendar from, int seconds)
   {
-    Calendar timeout = match.createdAt;
-    timeout.add(Calendar.SECOND, GladiatorArenaServerConfig.GAME_TIMEOUT_SECONDS);
+    Calendar timeout = from;
+    timeout.add(Calendar.SECOND, seconds);
     if (timeout.compareTo(Calendar.getInstance()) <= 0) return true;
     return false;
   }
 
-  private boolean startGame()
+  private void tryStartGame()
   {
-    if (this.player1.isReady() && this.player2.isReady())
+    if (this.clients.size() == this.players.size() && this.clients.stream().allMatch(c -> c.ready))
     {
       // generate map etc.
       nextTurn();
-      return true;
+      this.status = GameStatus.IN_PROGRESS;
     }
-    return false;
   }
 
-  private void updateGame(long diff)
+  private void updateGame()
   {
-    if (this.player1.isReady() && this.player2.isReady())
+    if (this.clients.stream().allMatch(c -> c.ready)
+        || this.checkTimedOut(this.roundStartedAt, GladiatorArenaServerConfig.GAME_ROUND_TIMEOUT_SECONDS))
     {
       //nextTurn();
-      endGame(GameStatus.FINISHED, this.player1);
+      this.status = GameStatus.FINISHED;
+      endGame(this.players.get(0));
     }
   }
 
   private void nextTurn()
   {
-    player1.setReady(false);
-    player2.setReady(false);
-    this.player1.client
-        .sendData(GsonSingleton.get().toJson(new SocketGameStateUpdateRequest(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, "test")));
-    this.player2.client
-        .sendData(GsonSingleton.get().toJson(new SocketGameStateUpdateRequest(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, "test")));
+    this.roundStartedAt = Calendar.getInstance();
+    this.clients.stream().forEach(c -> c.ready = false);
+    this.clients.stream().forEach(c -> c
+        .sendData(GsonSingleton.get().toJson(new SocketGameStateUpdateRequest(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, "test"))));
     // Regen AP to mercs
     // Count down CDs to mercs abilities
   }
@@ -157,6 +161,9 @@ public class GameInstance extends MaloWProcess
       case GladiatorArenaServerConfig.READY_REQUEST_NAME:
         packet.client.ready = true;
         packet.client.sendData(GsonSingleton.get().toJson(new SocketResponse(req.method, true)));
+        break;
+      case GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME:
+        packet.client.disconnected = true;
         break;
       /*
       default:
@@ -173,46 +180,30 @@ public class GameInstance extends MaloWProcess
     return null;
   }
 
-  private void endGame(GameStatus status, ConnectedPlayer winner)
+  private void endGame(Player winner)
   {
+    this.clients.stream().forEach(c -> c.sendData(GsonSingleton.get()
+        .toJson(new SocketGameFinishedUpdateRequest(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, winner.username))));
     if (winner != null)
     {
       this.calculateAndSetRatings(winner);
-      this.player1.client.sendData(GsonSingleton.get()
-          .toJson(new SocketGameFinishedUpdateRequest(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, winner.player.username)));
-      this.player2.client.sendData(GsonSingleton.get()
-          .toJson(new SocketGameFinishedUpdateRequest(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, winner.player.username)));
-    }
-    else
-    {
-      this.player1.client.sendData(
-          GsonSingleton.get().toJson(new SocketGameFinishedUpdateRequest(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, null)));
-      this.player2.client.sendData(
-          GsonSingleton.get().toJson(new SocketGameFinishedUpdateRequest(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, null)));
     }
 
-    this.player1.player.currentMatchId = null;
-    this.player2.player.currentMatchId = null;
+    this.players.stream().forEach(p -> p.currentMatchId = null);
+    this.players.stream().forEach(p ->
+    {
+      try
+      {
+        PlayerAccessor.update(p);
+      }
+      catch (UnexpectedException e)
+      {
+        MaloWLogger.error("Failed to update " + p.username, e);
+      }
+    });
 
-    try
-    {
-      PlayerAccessor.update(player1.player);
-    }
-    catch (UnexpectedException e)
-    {
-      MaloWLogger.error("Failed to update " + player1.player.username, e);
-    }
-    try
-    {
-      PlayerAccessor.update(player2.player);
-    }
-    catch (UnexpectedException e)
-    {
-      MaloWLogger.error("Failed to update " + player2.player.username, e);
-    }
-
-    this.match.winnerUsername = winner.player.username;
-    this.match.status = status;
+    this.match.winnerUsername = winner.username;
+    this.match.status = this.status;
     this.match.finishedAt = Calendar.getInstance();
     try
     {
@@ -222,34 +213,46 @@ public class GameInstance extends MaloWProcess
     {
       MaloWLogger.error("Failed to update match " + match.id, e);
     }
-    this.close();
-    GameInstanceHandler.deleteGame(this.match.id);
+    MatchHandler.deleteEndedMatch(this.match.id);
+    this.endedAt = Calendar.getInstance();
   }
 
-  private void calculateAndSetRatings(ConnectedPlayer winner)
+  private void calculateAndSetRatings(Player winner)
   {
-    if (winner.equals(this.player1))
+
+    this.players.stream().forEach(p ->
     {
-      this.player1.player.rating += 100;
-      this.match.ratingChangePlayer1 = 100;
-      this.player2.player.rating -= 100;
-      this.match.ratingChangePlayer2 = -100;
-    }
-    else
-    {
-      this.player1.player.rating -= 100;
-      this.match.ratingChangePlayer1 = -100;
-      this.player2.player.rating += 100;
-      this.match.ratingChangePlayer2 = 100;
-    }
+      if (winner.equals(p))
+      {
+        p.rating += 100;
+        if (p.id == this.match.player1Id)
+        {
+          this.match.ratingChangePlayer1 = 100;
+        }
+        else
+        {
+          this.match.ratingChangePlayer1 = 100;
+        }
+      }
+      else
+      {
+        p.rating -= 100;
+        if (p.id == this.match.player2Id)
+        {
+          this.match.ratingChangePlayer2 = -100;
+        }
+        else
+        {
+          this.match.ratingChangePlayer2 = -100;
+        }
+      }
+    });
   }
 
   @Override
   public void closeSpecific()
   {
-    if (this.player1.client != null) this.player1.client.close();
-    if (this.player2.client != null) this.player2.client.close();
-    if (this.player1.client != null) this.player1.client.waitUntillDone();
-    if (this.player2.client != null) this.player2.client.waitUntillDone();
+    this.clients.stream().forEach(c -> c.close());
+    this.clients.stream().forEach(c -> c.waitUntillDone());
   }
 }

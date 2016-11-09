@@ -5,7 +5,7 @@ import java.util.Scanner;
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
-import com.github.malow.gladiatorarena.server.handlers.GameInstanceHandler;
+import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.ClearCacheHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.GetMyInfoHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.QueueMatchmakingHandler;
@@ -45,7 +45,7 @@ public class GladiatorArenaServer
   public static void startServer(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServerConfig gameConfig)
   {
     // Setup SocketListener and GameInstanceHandler
-    GameInstanceHandler.getInstance().start();
+    MatchHandler.getInstance().start();
     socketListener = new SocketListener(7002);
     socketListener.start();
 
@@ -70,8 +70,8 @@ public class GladiatorArenaServer
     gameHttpsServer.close();
     socketListener.close();
     socketListener.waitUntillDone();
-    GameInstanceHandler.getInstance().close();
-    GameInstanceHandler.getInstance().waitUntillDone();
+    MatchHandler.getInstance().close();
+    MatchHandler.getInstance().waitUntillDone();
   }
 }
 

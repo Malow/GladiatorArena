@@ -10,7 +10,7 @@ import com.github.malow.gladiatorarena.server.database.Player;
 import com.github.malow.gladiatorarena.server.database.PlayerAccessor;
 import com.github.malow.malowlib.MaloWLogger;
 
-public class PlayerHandler
+public class HttpsGameApiHandler
 {
   public static Response getMyInfo(AuthorizedRequest req)
   {

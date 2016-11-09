@@ -25,7 +25,7 @@ public class MatchmakerHandler
       if (other != null)
       {
         playerQueue.remove(other);
-        GameInstanceHandler.createGame(player, other);
+        MatchHandler.createNewMatch(player, other);
       }
       else
       {
