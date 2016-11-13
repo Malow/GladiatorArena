@@ -48,7 +48,7 @@ public class HttpsGameApiHandler
     }
   }
 
-  public static Response UnqueueMatchmaking(AuthorizedRequest req)
+  public static Response unqueueMatchmaking(AuthorizedRequest req)
   {
     try
     {

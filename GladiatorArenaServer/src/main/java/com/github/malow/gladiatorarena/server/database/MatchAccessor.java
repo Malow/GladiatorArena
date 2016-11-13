@@ -11,10 +11,9 @@ public class MatchAccessor
 {
   public static Match create(Match match) throws UnexpectedException
   {
-    try
+    try (PreparedStatement s = Database.getConnection().prepareStatement("insert into Matches values (default, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        Statement.RETURN_GENERATED_KEYS))
     {
-      PreparedStatement s = Database.getConnection().prepareStatement("insert into Matches values (default, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-          Statement.RETURN_GENERATED_KEYS);
       int i = 1;
       s.setLong(i++, match.player1Id);
       s.setLong(i++, match.player2Id);
@@ -29,12 +28,14 @@ public class MatchAccessor
       s.setObject(i++, null);
       s.setString(i++, null);
       int rowCount = s.executeUpdate();
-      ResultSet generatedKeys = s.getGeneratedKeys();
-      if (rowCount != 0 && generatedKeys.next())
+      try (ResultSet generatedKeys = s.getGeneratedKeys())
       {
-        match.id = generatedKeys.getLong(1);
-        s.close();
-        return match;
+        if ((rowCount != 0) && generatedKeys.next())
+        {
+          match.id = generatedKeys.getLong(1);
+          s.close();
+          return match;
+        }
       }
     }
     catch (Exception e)
@@ -48,10 +49,9 @@ public class MatchAccessor
 
   public static boolean update(Match match) throws UnexpectedException
   {
-    try
+    try (PreparedStatement s1 = Database.getConnection().prepareStatement(
+        "UPDATE Matches SET player1_id = ?, player2_id = ?, username1 = ?, username2 = ?, rating_before_player1 = ?, rating_before_player2 = ?, status = ?, created_at = ?, winner_username = ?, rating_change_player1 = ?, rating_change_player2 = ?, finished_at = ? WHERE id = ?;"))
     {
-      PreparedStatement s1 = Database.getConnection().prepareStatement(
-          "UPDATE Matches SET player1_id = ?, player2_id = ?, username1 = ?, username2 = ?, rating_before_player1 = ?, rating_before_player2 = ?, status = ?, created_at = ?, winner_username = ?, rating_change_player1 = ?, rating_change_player2 = ?, finished_at = ? WHERE id = ?;");
       int i = 1;
       s1.setLong(i++, match.player1Id);
       s1.setLong(i++, match.player2Id);
@@ -64,13 +64,19 @@ public class MatchAccessor
       s1.setString(i++, match.winnerUsername);
       s1.setInt(i++, match.ratingChangePlayer1);
       s1.setInt(i++, match.ratingChangePlayer2);
-      if (match.finishedAt != null) s1.setString(i++, match.finishedAt.getTime().toString());
-      else s1.setString(i++, null);
+      if (match.finishedAt != null)
+      {
+        s1.setString(i++, match.finishedAt.getTime().toString());
+      }
+      else
+      {
+        s1.setString(i++, null);
+      }
       s1.setLong(i++, match.id);
       int rowCount = s1.executeUpdate();
       s1.close();
 
-      if (rowCount == 1) { return true; }
+      if (rowCount == 1) return true;
     }
     catch (Exception e)
     {

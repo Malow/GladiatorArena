@@ -18,17 +18,17 @@ public class Coords
 
   public boolean isUpperX()
   {
-    return this.x % 2 == 0;
+    return (this.x % 2) == 0;
   }
 
   public boolean isLowerX()
   {
-    return this.x % 2 == 1;
+    return (this.x % 2) == 1;
   }
 
   public boolean isValid()
   {
-    if (this.x >= 0 && this.x < HexagonMapSettings.sizeX && this.y >= 0 && this.y < HexagonMapSettings.sizeY) return true;
+    if ((this.x >= 0) && (this.x < HexagonMapSettings.sizeX) && (this.y >= 0) && (this.y < HexagonMapSettings.sizeY)) return true;
     return false;
   }
 
@@ -55,22 +55,25 @@ public class Coords
   }
 
   @Override
-  public boolean equals(Object obj)
+  public int hashCode()
   {
-    if (obj == null) return false;
-    if (!Hex.class.isAssignableFrom(obj.getClass())) { return false; }
-    final Hex other = (Hex) obj;
-    if (this.x == other.x && this.y == other.y) return true;
-    return false;
+    final int prime = 31;
+    int result = 1;
+    result = (prime * result) + this.x;
+    result = (prime * result) + this.y;
+    return result;
   }
 
   @Override
-  public int hashCode()
+  public boolean equals(Object obj)
   {
-    int hash = 3;
-    hash = 53 * hash + this.x;
-    hash = 53 * hash + this.y;
-    return hash;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (this.getClass() != obj.getClass()) return false;
+    Coords other = (Coords) obj;
+    if (this.x != other.x) return false;
+    if (this.y != other.y) return false;
+    return true;
   }
 
   @Override

@@ -30,7 +30,7 @@ public class GetMyInfoTests
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
-    assertEquals(new Integer(0), response.rating);
+    assertEquals(Integer.valueOf(0), response.rating);
     assertEquals(TestUsers.USER1.username, response.username);
   }
 
@@ -52,7 +52,7 @@ public class GetMyInfoTests
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(true, response.isSearchingForGame);
-    assertEquals(new Integer(0), response.rating);
+    assertEquals(Integer.valueOf(0), response.rating);
     assertEquals(TestUsers.USER1.username, response.username);
   }
 
@@ -66,7 +66,7 @@ public class GetMyInfoTests
     assertEquals(true, response.result);
     assertNotNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
-    assertEquals(new Integer(0), response.rating);
+    assertEquals(Integer.valueOf(0), response.rating);
     assertEquals(TestUsers.USER1.username, response.username);
   }
 }

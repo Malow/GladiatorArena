@@ -26,12 +26,12 @@ public class HexagonMap
   {
     Hex moveCoords = new Hex(from.x, from.y);
     int steps = 0;
-    while (moveCoords.x != to.x || moveCoords.y != to.y)
+    while ((moveCoords.x != to.x) || (moveCoords.y != to.y))
     {
       steps++;
       if (moveCoords.x == to.x) // Easy move Y
       {
-        moveCoords.y += getMoveStep(moveCoords.y, to.y);
+        moveCoords.y += this.getMoveStep(moveCoords.y, to.y);
       }
       else
       {
@@ -52,7 +52,7 @@ public class HexagonMap
             }
           }
         }
-        moveCoords.x += getMoveStep(moveCoords.x, to.x);
+        moveCoords.x += this.getMoveStep(moveCoords.x, to.x);
       }
     }
     return steps;
@@ -60,11 +60,8 @@ public class HexagonMap
 
   private int getMoveStep(int current, int target)
   {
-    if (current < target)
-    {
-      return 1;
-    }
-    else if (current > target) { return -1; }
+    if (current < target) return 1;
+    else if (current > target) return -1;
     return 0;
   }
 
@@ -75,7 +72,7 @@ public class HexagonMap
     {
       for (int i = 0; i < HexagonMapSettings.sizeX; i++)
       {
-        if (i % 2 == 0)
+        if ((i % 2) == 0)
         {
           int distance = this.getDistanceInHexes(from, new Hex(i, u));
           s += (distance + "").length() == 2 ? distance + " " : distance + "  ";
@@ -88,7 +85,7 @@ public class HexagonMap
       s += "\n";
       for (int i = 0; i < HexagonMapSettings.sizeX; i++)
       {
-        if (i % 2 == 1)
+        if ((i % 2) == 1)
         {
           int distance = this.getDistanceInHexes(from, new Hex(i, u));
           s += (distance + "").length() == 2 ? distance + " " : distance + "  ";
@@ -112,12 +109,12 @@ public class HexagonMap
     Map<Hex, Double> gScore = new HashMap<Hex, Double>();
     gScore.put(start, 0.0);
     Map<Hex, Double> fScore = new HashMap<Hex, Double>();
-    fScore.put(start, new Double(getDistanceInHexes(start, goal)));
+    fScore.put(start, Double.valueOf(this.getDistanceInHexes(start, goal)));
     while (!openSet.isEmpty())
     {
       Hex current = fScore.entrySet().stream().filter(a -> openSet.contains(a.getKey())).min((a, b) -> Double.compare(a.getValue(), b.getValue()))
           .get().getKey();
-      if (current.equals(goal)) { return this.reconstruct_path(cameFrom, current); }
+      if (current.equals(goal)) return this.reconstruct_path(cameFrom, current);
       openSet.remove(current);
       closedSet.add(current);
       List<Hex> neighbors = this.getNeighborsForHex(current);
@@ -138,7 +135,7 @@ public class HexagonMap
         }
         cameFrom.put(neighbor, current);
         gScore.put(neighbor, tentative_gScore);
-        fScore.put(neighbor, gScore.get(neighbor) + getDistanceInHexes(start, goal));
+        fScore.put(neighbor, gScore.get(neighbor) + this.getDistanceInHexes(start, goal));
       }
     }
     return null;

@@ -70,22 +70,22 @@ public class GameInstance extends MaloWProcess
       ProcessEvent ev = this.peekEvent();
       while (ev != null)
       {
-        GameNetworkPacket packet = getGameNetworkPacket(ev);
+        GameNetworkPacket packet = this.getGameNetworkPacket(ev);
         if (packet != null)
         {
-          handlePacket(packet);
+          this.handlePacket(packet);
         }
         ev = this.peekEvent();
       }
       if (this.status == GameStatus.NOT_STARTED)
       {
-        tryStartGame();
+        this.tryStartGame();
         if (this.status == GameStatus.NOT_STARTED)
         {
-          if (checkTimedOut(this.match.createdAt, GladiatorArenaServerConfig.PRE_GAME_TIMEOUT_SECONDS))
+          if (this.checkTimedOut(this.match.createdAt, GladiatorArenaServerConfig.PRE_GAME_TIMEOUT_SECONDS))
           {
             this.status = GameStatus.TIMED_OUT;
-            endGame(null);
+            this.endGame(null);
           }
           else
           {
@@ -102,11 +102,12 @@ public class GameInstance extends MaloWProcess
       }
       else if (this.status == GameStatus.IN_PROGRESS)
       {
-        updateGame();
+        this.updateGame();
       }
       else
       {
-        if (this.clients.stream().allMatch(c -> c.disconnected) || checkTimedOut(this.endedAt, GladiatorArenaServerConfig.POST_GAME_DURATION_SECONDS))
+        if (this.clients.stream().allMatch(c -> c.disconnected)
+            || this.checkTimedOut(this.endedAt, GladiatorArenaServerConfig.POST_GAME_DURATION_SECONDS))
         {
           this.close();
         }
@@ -124,10 +125,10 @@ public class GameInstance extends MaloWProcess
 
   private void tryStartGame()
   {
-    if (this.clients.size() == this.players.size() && this.clients.stream().allMatch(c -> c.ready))
+    if ((this.clients.size() == this.players.size()) && this.clients.stream().allMatch(c -> c.ready))
     {
       // generate map etc.
-      nextTurn();
+      this.nextTurn();
       this.status = GameStatus.IN_PROGRESS;
     }
   }
@@ -139,7 +140,7 @@ public class GameInstance extends MaloWProcess
     {
       //nextTurn();
       this.status = GameStatus.FINISHED;
-      endGame(this.players.get(0));
+      this.endGame(this.players.get(0));
     }
   }
 
@@ -175,7 +176,7 @@ public class GameInstance extends MaloWProcess
 
   private GameNetworkPacket getGameNetworkPacket(ProcessEvent ev)
   {
-    if (ev instanceof GameNetworkPacket) { return (GameNetworkPacket) ev; }
+    if (ev instanceof GameNetworkPacket) return (GameNetworkPacket) ev;
     MaloWLogger.error("Got a ProcessEvent that wasn't of type GameNetworkPacket", new Exception());
     return null;
   }
@@ -187,6 +188,7 @@ public class GameInstance extends MaloWProcess
     if (winner != null)
     {
       this.calculateAndSetRatings(winner);
+      this.match.winnerUsername = winner.username;
     }
 
     this.players.stream().forEach(p -> p.currentMatchId = null);
@@ -202,7 +204,6 @@ public class GameInstance extends MaloWProcess
       }
     });
 
-    this.match.winnerUsername = winner.username;
     this.match.status = this.status;
     this.match.finishedAt = Calendar.getInstance();
     try
@@ -211,7 +212,7 @@ public class GameInstance extends MaloWProcess
     }
     catch (UnexpectedException e)
     {
-      MaloWLogger.error("Failed to update match " + match.id, e);
+      MaloWLogger.error("Failed to update match " + this.match.id, e);
     }
     MatchHandler.deleteEndedMatch(this.match.id);
     this.endedAt = Calendar.getInstance();
@@ -225,7 +226,7 @@ public class GameInstance extends MaloWProcess
       if (winner.equals(p))
       {
         p.rating += 100;
-        if (p.id == this.match.player1Id)
+        if (p.id.equals(this.match.player1Id))
         {
           this.match.ratingChangePlayer1 = 100;
         }
@@ -237,7 +238,7 @@ public class GameInstance extends MaloWProcess
       else
       {
         p.rating -= 100;
-        if (p.id == this.match.player2Id)
+        if (p.id.equals(this.match.player2Id))
         {
           this.match.ratingChangePlayer2 = -100;
         }

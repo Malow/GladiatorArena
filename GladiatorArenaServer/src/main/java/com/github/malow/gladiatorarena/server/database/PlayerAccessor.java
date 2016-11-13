@@ -18,27 +18,24 @@ public class PlayerAccessor
     Player a = cacheByAccountId.get(accountId);
     if (a != null) return a;
 
-    try
+    try (PreparedStatement s1 = Database.getConnection().prepareStatement("SELECT * FROM Players WHERE account_id = ? ; "))
     {
-      PreparedStatement s1 = Database.getConnection().prepareStatement("SELECT * FROM Players WHERE account_id = ? ; ");
       s1.setLong(1, accountId);
-      ResultSet s1Res = s1.executeQuery();
-
-      if (s1Res.next())
+      try (ResultSet s1Res = s1.executeQuery())
       {
-        Long id = s1Res.getLong("id");
-        String username = s1Res.getString("username");
-        Integer rating = s1Res.getInt("rating");
+        if (s1Res.next())
+        {
+          Long id = s1Res.getLong("id");
+          String username = s1Res.getString("username");
+          Integer rating = s1Res.getInt("rating");
 
-        Player player = new Player(id, accountId, username, rating);
-        s1Res.close();
-        s1.close();
-        cacheByAccountId.put(accountId, player);
-        return player;
-      }
-      else // No player found for that account, create one.
-      {
-        return create(new Player(AccountAccessor.read(email)));
+          Player player = new Player(id, accountId, username, rating);
+          s1Res.close();
+          s1.close();
+          cacheByAccountId.put(accountId, player);
+          return player;
+        }
+        else return create(new Player(AccountAccessor.read(email)));
       }
     }
     catch (Exception e)
@@ -51,22 +48,23 @@ public class PlayerAccessor
 
   public static Player create(Player player) throws UnexpectedException
   {
-    try
+    try (PreparedStatement s = Database.getConnection().prepareStatement("insert into Players values (default, ?, ?, ?);",
+        Statement.RETURN_GENERATED_KEYS))
     {
-      PreparedStatement s = Database.getConnection().prepareStatement("insert into Players values (default, ?, ?, ?);",
-          Statement.RETURN_GENERATED_KEYS);
       int i = 1;
       s.setLong(i++, player.accountId);
       s.setString(i++, player.username);
       s.setInt(i++, player.rating);
       int rowCount = s.executeUpdate();
-      ResultSet generatedKeys = s.getGeneratedKeys();
-      if (rowCount != 0 && generatedKeys.next())
+      try (ResultSet generatedKeys = s.getGeneratedKeys())
       {
-        player.id = generatedKeys.getLong(1);
-        s.close();
-        cacheByAccountId.put(player.accountId, player);
-        return player;
+        if ((rowCount != 0) && generatedKeys.next())
+        {
+          player.id = generatedKeys.getLong(1);
+          s.close();
+          cacheByAccountId.put(player.accountId, player);
+          return player;
+        }
       }
     }
     catch (Exception e)
@@ -80,9 +78,9 @@ public class PlayerAccessor
 
   public static boolean update(Player player) throws UnexpectedException
   {
-    try
+    try (
+        PreparedStatement s1 = Database.getConnection().prepareStatement("UPDATE Players SET account_id = ?, username = ?, rating = ? WHERE id = ?;"))
     {
-      PreparedStatement s1 = Database.getConnection().prepareStatement("UPDATE Players SET account_id = ?, username = ?, rating = ? WHERE id = ?;");
       int i = 1;
       s1.setLong(i++, player.accountId);
       s1.setString(i++, player.username);

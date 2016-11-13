@@ -49,7 +49,7 @@ public class GameTest
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
-    assertEquals(new Integer(-100), response.rating);
+    assertEquals(Integer.valueOf(-100), response.rating);
     assertEquals(TestUsers.USER1.username, response.username);
 
     jsonResponse = ServerConnection.getMyInfo(TestUsers.USER2);
@@ -57,7 +57,7 @@ public class GameTest
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
-    assertEquals(new Integer(100), response.rating);
+    assertEquals(Integer.valueOf(100), response.rating);
     assertEquals(TestUsers.USER2.username, response.username);
   }
 

@@ -47,7 +47,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = HttpsGameApiHandler.UnqueueMatchmaking(req);
+      Response resp = HttpsGameApiHandler.unqueueMatchmaking(req);
       return GsonSingleton.get().toJson(resp);
     }
   }

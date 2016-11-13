@@ -1,5 +1,6 @@
 package com.github.malow.gladiatorarena.server.testhelpers;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -46,23 +47,26 @@ public class TestHelpers
 
   private static void doResetDatabaseTable(String tableName) throws Exception
   {
-    Connection connection = DriverManager
-        .getConnection("jdbc:mysql://localhost/GladiatorArenaServer?" + "user=GladArUsr&password=password&autoReconnect=true");
     String sql = "DELETE FROM " + tableName + " ;";
-    PreparedStatement s1 = connection.prepareStatement(sql);
-    s1.execute();
+    try (PreparedStatement s1 = DriverManager
+        .getConnection("jdbc:mysql://localhost/GladiatorArenaServer?" + "user=GladArUsr&password=password&autoReconnect=true").prepareStatement(sql))
+    {
+      s1.execute();
+    }
   }
 
   private static void createDatabase() throws Exception
   {
-    Connection connection = DriverManager.getConnection("jdbc:mysql://localhost?" + "user=GladArUsr&password=password&autoReconnect=true");
-    runSqlStatementsFromFile(connection, "../CreateMysqlDatabase.sql");
-    runSqlStatementsFromFile(connection, "../CreateSqlTables.sql");
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost?" + "user=GladArUsr&password=password&autoReconnect=true"))
+    {
+      runSqlStatementsFromFile(connection, "../CreateMysqlDatabase.sql");
+      runSqlStatementsFromFile(connection, "../CreateSqlTables.sql");
+    }
   }
 
   private static void runSqlStatementsFromFile(Connection connection, String pathToFile) throws Exception
   {
-    String file = new String(Files.readAllBytes(Paths.get(pathToFile)));
+    String file = new String(Files.readAllBytes(Paths.get(pathToFile)), StandardCharsets.UTF_8);
     String[] statements = file.split("\\;");
     for (String statement : statements)
     {
@@ -72,7 +76,6 @@ public class TestHelpers
       }
       catch (Exception e2)
       {
-        throw e2;
       }
     }
   }

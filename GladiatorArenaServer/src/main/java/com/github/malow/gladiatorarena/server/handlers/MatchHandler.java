@@ -37,7 +37,10 @@ public class MatchHandler extends MaloWProcess
 
   public static MatchHandler getInstance()
   {
-    if (INSTANCE == null) INSTANCE = new MatchHandler();
+    if (INSTANCE == null)
+    {
+      INSTANCE = new MatchHandler();
+    }
     return INSTANCE;
   }
 
@@ -86,13 +89,20 @@ public class MatchHandler extends MaloWProcess
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
         SocketJoinGameRequest req = GsonSingleton.get().fromJson(packet.message, SocketJoinGameRequest.class);
-        if (req != null && req.isValid() && req.method.equals(GladiatorArenaServerConfig.JOIN_GAME_REQUEST_NAME))
+        if ((req != null) && req.isValid())
         {
-          this.handleRequest(req, packet.client);
+          if (req.method.equals(GladiatorArenaServerConfig.JOIN_GAME_REQUEST_NAME))
+          {
+            this.handleRequest(req, packet.client);
+          }
+          else
+          {
+            packet.client.sendData(GsonSingleton.get().toJson(new SocketErrorResponse(req.method, false, "Unexpected method")));
+          }
         }
         else
         {
-          packet.client.sendData(GsonSingleton.get().toJson(new SocketErrorResponse(req.method, false, "Unexpected method")));
+          packet.client.sendData(GsonSingleton.get().toJson(new SocketErrorResponse("", false, "Bad Request")));
         }
       }
     }
@@ -105,7 +115,7 @@ public class MatchHandler extends MaloWProcess
       Long accId = AccountServer.checkAuthentication(req.email, req.authToken);
       client.accId = accId;
       GameInstance game = games.get(req.gameId);
-      if (game != null && game.clientConnected(client))
+      if ((game != null) && game.clientConnected(client))
       {
         client.setNotifier(game);
         this.clients.remove(client);
