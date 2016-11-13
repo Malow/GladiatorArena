@@ -7,8 +7,8 @@ import com.github.malow.malowlib.network.https.HttpsPostClient;
 
 public class ServerConnection
 {
-  public static HttpsPostClient accountServerClient = new HttpsPostClient(Config.ACCOUNT_SERVER_HOST);
-  public static HttpsPostClient gameServerClient = new HttpsPostClient(Config.GAME_SERVER_HOST);
+  public static HttpsPostClient accountServerClient = new HttpsPostClient(Config.ACCOUNT_SERVER_HOST, true);
+  public static HttpsPostClient gameServerClient = new HttpsPostClient(Config.GAME_SERVER_HOST, true);
 
   public static String login(User user) throws Exception
   {

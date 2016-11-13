@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
+import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
 
 public class GladiatorArenaServerForTests
 {
@@ -15,13 +16,13 @@ public class GladiatorArenaServerForTests
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
     gladConfig.allowClearCacheOperation = true;
 
-    HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, "https_key.jks", "password");
+    HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     AccountServerConfig accountServerConfig = new AccountServerConfig("GladiatorArenaServer", "GladArUsr", "password", accountServerHttpsConfig,
         "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
     accountServerConfig.enableEmailSending = false;
     accountServerConfig.allowClearCacheOperation = true;
 
-    HttpsPostServerConfig gameConfig = new HttpsPostServerConfig(7001, "https_key.jks", "password");
+    HttpsPostServerConfig gameConfig = new HttpsPostServerConfig(7001, new LetsEncryptConfig("LetsEncryptCerts"), "password");
 
     GladiatorArenaServer.startServer(gladConfig, accountServerConfig, gameConfig);
 

@@ -5,13 +5,14 @@ import java.util.Scanner;
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
-import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.ClearCacheHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.GetMyInfoHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.QueueMatchmakingHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.UnqueueMatchmakingHandler;
+import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
 import com.github.malow.malowlib.network.https.HttpsPostServer;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
+import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
 
 public class GladiatorArenaServer
 {
@@ -22,11 +23,11 @@ public class GladiatorArenaServer
   {
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
 
-    HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, "https_key.jks", "password");
+    HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     AccountServerConfig accountServerConfig = new AccountServerConfig("GladiatorArenaServer", "GladArUsr", "password", accountServerHttpsConfig,
         "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
 
-    HttpsPostServerConfig gameConfig = new HttpsPostServerConfig(7001, "https_key.jks", "password");
+    HttpsPostServerConfig gameConfig = new HttpsPostServerConfig(7001, new LetsEncryptConfig("LetsEncryptCerts"), "password");
 
     startServer(gladConfig, accountServerConfig, gameConfig);
 
