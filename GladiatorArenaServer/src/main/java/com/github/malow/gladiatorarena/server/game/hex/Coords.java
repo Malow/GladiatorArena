@@ -1,9 +1,5 @@
 package com.github.malow.gladiatorarena.server.game.hex;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class Coords
 {
 
@@ -24,34 +20,6 @@ public class Coords
   public boolean isLowerX()
   {
     return (this.x % 2) == 1;
-  }
-
-  public boolean isValid()
-  {
-    if ((this.x >= 0) && (this.x < HexagonMapSettings.sizeX) && (this.y >= 0) && (this.y < HexagonMapSettings.sizeY)) return true;
-    return false;
-  }
-
-  public List<Coords> getCoordsForNeighbors()
-  {
-    List<Coords> neighbors = new ArrayList<Coords>();
-    neighbors.add(new Coords(this.x, this.y + 1));
-    neighbors.add(new Coords(this.x, this.y - 1));
-    if (this.isLowerX())
-    {
-      neighbors.add(new Coords(this.x - 1, this.y));
-      neighbors.add(new Coords(this.x - 1, this.y + 1));
-      neighbors.add(new Coords(this.x + 1, this.y));
-      neighbors.add(new Coords(this.x + 1, this.y + 1));
-    }
-    else
-    {
-      neighbors.add(new Coords(this.x - 1, this.y - 1));
-      neighbors.add(new Coords(this.x - 1, this.y));
-      neighbors.add(new Coords(this.x + 1, this.y - 1));
-      neighbors.add(new Coords(this.x + 1, this.y));
-    }
-    return neighbors.stream().filter(n -> n.isValid()).collect(Collectors.toList());
   }
 
   @Override

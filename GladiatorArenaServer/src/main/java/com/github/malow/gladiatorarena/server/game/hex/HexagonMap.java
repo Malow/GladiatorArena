@@ -4,18 +4,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class HexagonMap
 {
-
   private Hex[][] map;
+  private int sizeX;
+  private int sizeY;
 
-  public HexagonMap()
+  public HexagonMap(int sizeX, int sizeY)
   {
-    this.map = new Hex[HexagonMapSettings.sizeX][HexagonMapSettings.sizeY];
-    for (int i = 0; i < HexagonMapSettings.sizeX; i++)
+    this.sizeX = sizeX;
+    this.sizeY = sizeY;
+    this.map = new Hex[sizeX][sizeY];
+    for (int i = 0; i < sizeX; i++)
     {
-      for (int u = 0; u < HexagonMapSettings.sizeY; u++)
+      for (int u = 0; u < sizeY; u++)
       {
         this.map[i][u] = new Hex(i, u);
       }
@@ -68,9 +72,9 @@ public class HexagonMap
   public String getAsGraphicalStringWithDistances(Hex from)
   {
     String s = "";
-    for (int u = 0; u < HexagonMapSettings.sizeY; u++)
+    for (int u = 0; u < this.sizeY; u++)
     {
-      for (int i = 0; i < HexagonMapSettings.sizeX; i++)
+      for (int i = 0; i < this.sizeX; i++)
       {
         if ((i % 2) == 0)
         {
@@ -83,7 +87,7 @@ public class HexagonMap
         }
       }
       s += "\n";
-      for (int i = 0; i < HexagonMapSettings.sizeX; i++)
+      for (int i = 0; i < this.sizeX; i++)
       {
         if ((i % 2) == 1)
         {
@@ -152,14 +156,39 @@ public class HexagonMap
     return totalPath;
   }
 
-  private List<Hex> getNeighborsForHex(Hex hex)
+  public List<Hex> getNeighborsForHex(Hex hex)
   {
     List<Hex> neighbors = new ArrayList<Hex>();
-    List<Coords> coords = hex.getCoordsForNeighbors();
+    List<Coords> coords = this.getCoordsForNeighbors(hex);
     for (Coords coord : coords)
     {
       neighbors.add(this.map[coord.x][coord.y]);
     }
     return neighbors;
+  }
+
+  private List<Coords> getCoordsForNeighbors(Coords coord)
+  {
+    List<Coords> neighbors = new ArrayList<Coords>();
+    neighbors.add(new Coords(coord.x, coord.y + 1));
+    neighbors.add(new Coords(coord.x, coord.y - 1));
+    if (coord.isLowerX())
+    {
+      neighbors.add(new Coords(coord.x - 1, coord.y));
+      neighbors.add(new Coords(coord.x - 1, coord.y + 1));
+      neighbors.add(new Coords(coord.x + 1, coord.y));
+      neighbors.add(new Coords(coord.x + 1, coord.y + 1));
+    }
+    else
+    {
+      neighbors.add(new Coords(coord.x - 1, coord.y - 1));
+      neighbors.add(new Coords(coord.x - 1, coord.y));
+      neighbors.add(new Coords(coord.x + 1, coord.y - 1));
+      neighbors.add(new Coords(coord.x + 1, coord.y));
+    }
+    return neighbors.stream().filter(n ->
+    {
+      return ((n.x >= 0) && (n.x < this.sizeX) && (n.y >= 0) && (n.y < this.sizeY));
+    }).collect(Collectors.toList());
   }
 }

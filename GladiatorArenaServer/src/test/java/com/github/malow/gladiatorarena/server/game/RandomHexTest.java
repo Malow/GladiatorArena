@@ -8,16 +8,15 @@ import org.junit.Test;
 
 import com.github.malow.gladiatorarena.server.game.hex.Hex;
 import com.github.malow.gladiatorarena.server.game.hex.HexagonMap;
-import com.github.malow.gladiatorarena.server.game.hex.HexagonMapSettings;
 
 public class RandomHexTest
 {
   @Test
   public void test()
   {
-    HexagonMapSettings.sizeX = 50;
-    HexagonMapSettings.sizeY = 50;
-    HexagonMap m = new HexagonMap();
+    int sizeX = 50;
+    int sizeY = 50;
+    HexagonMap m = new HexagonMap(sizeX, sizeY);
     long startTime;
     long endTime;
     DecimalFormat df = new DecimalFormat("#.##");
@@ -25,9 +24,9 @@ public class RandomHexTest
     int distance;
     //
     startTime = System.nanoTime();
-    Hex from = new Hex(rand.nextInt(HexagonMapSettings.sizeX), rand.nextInt(HexagonMapSettings.sizeY));
-    Hex to = new Hex(rand.nextInt(HexagonMapSettings.sizeX), rand.nextInt(HexagonMapSettings.sizeY));
-    from = new Hex(0, 0);
+    Hex from = new Hex(rand.nextInt(sizeX), rand.nextInt(sizeY));
+    Hex to = new Hex(rand.nextInt(sizeX), rand.nextInt(sizeY));
+    from = new Hex(0, 5);
     to = new Hex(25, 5);
     System.out.println("From: " + from.toString() + " to: " + to.toString());
     endTime = System.nanoTime() - startTime;
@@ -67,5 +66,8 @@ public class RandomHexTest
     {
       System.out.println("ERROR: couldnt find an astar path");
     }
+    System.out.println("NBs_");
+    List<Hex> ns = m.getNeighborsForHex(from);
+    ns.stream().forEach(n -> System.out.println(n.toString()));
   }
 }
