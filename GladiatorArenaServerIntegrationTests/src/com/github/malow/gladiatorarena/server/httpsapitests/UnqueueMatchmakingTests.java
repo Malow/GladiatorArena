@@ -26,7 +26,7 @@ public class UnqueueMatchmakingTests
   {
     ServerConnection.queueMatchmaking(TestUsers.USER1);
     String jsonResponse = ServerConnection.unqueueMatchmaking(TestUsers.USER1);
-    Response response = GsonSingleton.get().fromJson(jsonResponse, Response.class);
+    Response response = GsonSingleton.fromJson(jsonResponse, Response.class);
     assertEquals(true, response.result);
   }
 
@@ -34,7 +34,7 @@ public class UnqueueMatchmakingTests
   public void testUnqueueMatchmakingFailsWhenNotQueued() throws Exception
   {
     String jsonResponse = ServerConnection.unqueueMatchmaking(TestUsers.USER1);
-    ErrorResponse response = GsonSingleton.get().fromJson(jsonResponse, ErrorResponse.class);
+    ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
     assertEquals(false, response.result);
     assertEquals(ErrorMessages.NOT_IN_QUEUE, response.error);
   }
@@ -46,7 +46,7 @@ public class UnqueueMatchmakingTests
     ServerConnection.queueMatchmaking(TestUsers.USER2);
 
     String jsonResponse = ServerConnection.unqueueMatchmaking(TestUsers.USER1);
-    ErrorResponse response = GsonSingleton.get().fromJson(jsonResponse, ErrorResponse.class);
+    ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
     assertEquals(false, response.result);
     assertEquals(ErrorMessages.ALREADY_HAVE_A_MATCH, response.error);
   }

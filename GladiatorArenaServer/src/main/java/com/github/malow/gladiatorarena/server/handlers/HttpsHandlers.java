@@ -15,7 +15,7 @@ public class HttpsHandlers
     {
       PlayerAccessor.clearCache();
       MatchmakerHandler.clearQueue();
-      return GsonSingleton.get().toJson(new Response(true));
+      return GsonSingleton.toJson(new Response(true));
     }
   }
 
@@ -26,7 +26,7 @@ public class HttpsHandlers
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
       Response resp = HttpsGameApiHandler.getMyInfo(req);
-      return GsonSingleton.get().toJson(resp);
+      return GsonSingleton.toJson(resp);
     }
   }
 
@@ -37,7 +37,7 @@ public class HttpsHandlers
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
       Response resp = HttpsGameApiHandler.queueMatchmaking(req);
-      return GsonSingleton.get().toJson(resp);
+      return GsonSingleton.toJson(resp);
     }
   }
 
@@ -48,7 +48,7 @@ public class HttpsHandlers
     {
       AuthorizedRequest req = (AuthorizedRequest) createValidJsonRequest(request, AuthorizedRequest.class);
       Response resp = HttpsGameApiHandler.unqueueMatchmaking(req);
-      return GsonSingleton.get().toJson(resp);
+      return GsonSingleton.toJson(resp);
     }
   }
 }

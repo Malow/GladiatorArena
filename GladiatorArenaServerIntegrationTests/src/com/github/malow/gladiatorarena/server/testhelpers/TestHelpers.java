@@ -28,7 +28,7 @@ public class TestHelpers
   public static String loginAndGetAuthToken(User user) throws Exception
   {
     String jsonResponse = ServerConnection.login(user);
-    LoginResponse response = GsonSingleton.get().fromJson(jsonResponse, LoginResponse.class);
+    LoginResponse response = GsonSingleton.fromJson(jsonResponse, LoginResponse.class);
     return response.authToken;
   }
 

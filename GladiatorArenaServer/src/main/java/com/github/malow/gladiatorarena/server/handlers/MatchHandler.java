@@ -88,7 +88,7 @@ public class MatchHandler extends MaloWProcess
       if (ev instanceof GameNetworkPacket)
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
-        SocketJoinGameRequest req = GsonSingleton.get().fromJson(packet.message, SocketJoinGameRequest.class);
+        SocketJoinGameRequest req = GsonSingleton.fromJson(packet.message, SocketJoinGameRequest.class);
         if ((req != null) && req.isValid())
         {
           if (req.method.equals(GladiatorArenaServerConfig.JOIN_GAME_REQUEST_NAME))
@@ -97,12 +97,12 @@ public class MatchHandler extends MaloWProcess
           }
           else
           {
-            packet.client.sendData(GsonSingleton.get().toJson(new SocketErrorResponse(req.method, false, "Unexpected method")));
+            packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, false, "Unexpected method")));
           }
         }
         else
         {
-          packet.client.sendData(GsonSingleton.get().toJson(new SocketErrorResponse("", false, "Bad Request")));
+          packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse("", false, "Bad Request")));
         }
       }
     }
@@ -119,16 +119,16 @@ public class MatchHandler extends MaloWProcess
       {
         client.setNotifier(game);
         this.clients.remove(client);
-        client.sendData(GsonSingleton.get().toJson(new SocketResponse(req.method, true)));
+        client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, true)));
       }
       else
       {
-        client.sendData(GsonSingleton.get().toJson(new SocketResponse(req.method, false)));
+        client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
       }
     }
     catch (WrongAuthentificationTokenException e)
     {
-      client.sendData(GsonSingleton.get().toJson(new SocketResponse(req.method, false)));
+      client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
     }
   }
 

@@ -12,7 +12,7 @@ public class ServerConnection
 
   public static String login(User user) throws Exception
   {
-    String request = GsonSingleton.get().toJson(new LoginRequest(user.email, user.password));
+    String request = GsonSingleton.toJson(new LoginRequest(user.email, user.password));
     return accountServerClient.sendMessage("/login", request);
   }
 
@@ -23,19 +23,19 @@ public class ServerConnection
 
   public static String getMyInfo(String email, String authToken) throws Exception
   {
-    String request = GsonSingleton.get().toJson(new AuthorizedRequest(email, authToken));
+    String request = GsonSingleton.toJson(new AuthorizedRequest(email, authToken));
     return gameServerClient.sendMessage("/getmyinfo", request);
   }
 
   public static String queueMatchmaking(User user) throws Exception
   {
-    String request = GsonSingleton.get().toJson(new AuthorizedRequest(user.email, user.authToken));
+    String request = GsonSingleton.toJson(new AuthorizedRequest(user.email, user.authToken));
     return gameServerClient.sendMessage("/queuematchmaking", request);
   }
 
   public static String unqueueMatchmaking(User user) throws Exception
   {
-    String request = GsonSingleton.get().toJson(new AuthorizedRequest(user.email, user.authToken));
+    String request = GsonSingleton.toJson(new AuthorizedRequest(user.email, user.authToken));
     return gameServerClient.sendMessage("/unqueuematchmaking", request);
   }
 

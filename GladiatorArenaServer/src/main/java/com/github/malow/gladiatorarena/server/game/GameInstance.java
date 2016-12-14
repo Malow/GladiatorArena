@@ -148,20 +148,20 @@ public class GameInstance extends MaloWProcess
   {
     this.roundStartedAt = Calendar.getInstance();
     this.clients.stream().forEach(c -> c.ready = false);
-    this.clients.stream().forEach(c -> c
-        .sendData(GsonSingleton.get().toJson(new SocketGameStateUpdateRequest(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, "test"))));
+    this.clients.stream().forEach(
+        c -> c.sendData(GsonSingleton.toJson(new SocketGameStateUpdateRequest(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, "test"))));
     // Regen AP to mercs
     // Count down CDs to mercs abilities
   }
 
   private void handlePacket(GameNetworkPacket packet)
   {
-    SocketRequest req = GsonSingleton.get().fromJson(packet.message, SocketRequest.class);
+    SocketRequest req = GsonSingleton.fromJson(packet.message, SocketRequest.class);
     switch (req.method)
     {
       case GladiatorArenaServerConfig.READY_REQUEST_NAME:
         packet.client.ready = true;
-        packet.client.sendData(GsonSingleton.get().toJson(new SocketResponse(req.method, true)));
+        packet.client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, true)));
         break;
       case GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME:
         packet.client.disconnected = true;
@@ -169,7 +169,7 @@ public class GameInstance extends MaloWProcess
       /*
       default:
       MaloWLogger.error("Unexpected msg received from client " + packet.client.getChannelID() + ": " + packet.message, new Exception());
-      packet.client.sendData(GsonSingleton.get().toJson(new SocketErrorResponse(req.method, false, "Unexpected method")));
+      packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, false, "Unexpected method")));
       */
     }
   }
@@ -183,8 +183,8 @@ public class GameInstance extends MaloWProcess
 
   private void endGame(Player winner)
   {
-    this.clients.stream().forEach(c -> c.sendData(GsonSingleton.get()
-        .toJson(new SocketGameFinishedUpdateRequest(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, winner.username))));
+    this.clients.stream().forEach(c -> c.sendData(
+        GsonSingleton.toJson(new SocketGameFinishedUpdateRequest(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, winner.username))));
     if (winner != null)
     {
       this.calculateAndSetRatings(winner);

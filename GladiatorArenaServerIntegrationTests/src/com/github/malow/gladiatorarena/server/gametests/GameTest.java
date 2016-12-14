@@ -36,7 +36,7 @@ public class GameTest
   {
     ServerConnection.queueMatchmaking(TestUsers.USER1);
     ServerConnection.queueMatchmaking(TestUsers.USER2);
-    long matchId = GsonSingleton.get().fromJson(ServerConnection.getMyInfo(TestUsers.USER1), GetMyInfoResponse.class).currentMatchId;
+    long matchId = GsonSingleton.fromJson(ServerConnection.getMyInfo(TestUsers.USER1), GetMyInfoResponse.class).currentMatchId;
     GameSocketClient p1 = new GameSocketClient(TestUsers.USER1, matchId);
     p1.start();
     GameSocketClient p2 = new GameSocketClient(TestUsers.USER2, matchId);
@@ -45,7 +45,7 @@ public class GameTest
     p2.waitUntillDone();
 
     String jsonResponse = ServerConnection.getMyInfo(TestUsers.USER1);
-    GetMyInfoResponse response = GsonSingleton.get().fromJson(jsonResponse, GetMyInfoResponse.class);
+    GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
@@ -53,7 +53,7 @@ public class GameTest
     assertEquals(TestUsers.USER1.username, response.username);
 
     jsonResponse = ServerConnection.getMyInfo(TestUsers.USER2);
-    response = GsonSingleton.get().fromJson(jsonResponse, GetMyInfoResponse.class);
+    response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
@@ -76,7 +76,7 @@ public class GameTest
       this.server = new NetworkChannel(Config.GAME_SOCKET_SERVER_IP, Config.GAME_SOCKET_SERVER_PORT);
       this.server.setNotifier(this);
       this.server.start();
-      this.server.sendData(GsonSingleton.get()
+      this.server.sendData(GsonSingleton
           .toJson(new SocketJoinGameRequest(GladiatorArenaServerConfig.JOIN_GAME_REQUEST_NAME, this.email, this.authToken, this.gameId)));
     }
 
@@ -84,33 +84,33 @@ public class GameTest
     public void life()
     {
       NetworkPacket packet = (NetworkPacket) this.waitEvent();
-      SocketResponse response = GsonSingleton.get().fromJson(packet.getMessage(), SocketResponse.class);
+      SocketResponse response = GsonSingleton.fromJson(packet.getMessage(), SocketResponse.class);
       assertEquals(true, response.result);
       assertEquals(GladiatorArenaServerConfig.JOIN_GAME_REQUEST_NAME, response.method);
 
-      this.server.sendData(GsonSingleton.get().toJson(new SocketRequest(GladiatorArenaServerConfig.READY_REQUEST_NAME)));
+      this.server.sendData(GsonSingleton.toJson(new SocketRequest(GladiatorArenaServerConfig.READY_REQUEST_NAME)));
       packet = (NetworkPacket) this.waitEvent();
-      response = GsonSingleton.get().fromJson(packet.getMessage(), SocketResponse.class);
+      response = GsonSingleton.fromJson(packet.getMessage(), SocketResponse.class);
       assertEquals(true, response.result);
       assertEquals(GladiatorArenaServerConfig.READY_REQUEST_NAME, response.method);
 
       packet = (NetworkPacket) this.waitEvent();
-      SocketGameStateUpdateRequest updateRequest = GsonSingleton.get().fromJson(packet.getMessage(), SocketGameStateUpdateRequest.class);
+      SocketGameStateUpdateRequest updateRequest = GsonSingleton.fromJson(packet.getMessage(), SocketGameStateUpdateRequest.class);
       assertEquals(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, updateRequest.method);
       assertEquals("test", updateRequest.test);
-      this.server.sendData(GsonSingleton.get().toJson(new SocketResponse(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, true)));
+      this.server.sendData(GsonSingleton.toJson(new SocketResponse(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, true)));
 
-      this.server.sendData(GsonSingleton.get().toJson(new SocketRequest(GladiatorArenaServerConfig.READY_REQUEST_NAME)));
+      this.server.sendData(GsonSingleton.toJson(new SocketRequest(GladiatorArenaServerConfig.READY_REQUEST_NAME)));
       packet = (NetworkPacket) this.waitEvent();
-      response = GsonSingleton.get().fromJson(packet.getMessage(), SocketResponse.class);
+      response = GsonSingleton.fromJson(packet.getMessage(), SocketResponse.class);
       assertEquals(true, response.result);
       assertEquals(GladiatorArenaServerConfig.READY_REQUEST_NAME, response.method);
 
       packet = (NetworkPacket) this.waitEvent();
-      SocketGameFinishedUpdateRequest finishRequest = GsonSingleton.get().fromJson(packet.getMessage(), SocketGameFinishedUpdateRequest.class);
+      SocketGameFinishedUpdateRequest finishRequest = GsonSingleton.fromJson(packet.getMessage(), SocketGameFinishedUpdateRequest.class);
       assertEquals(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, finishRequest.method);
       assertEquals(TestUsers.USER2.username, finishRequest.winnerUsername);
-      this.server.sendData(GsonSingleton.get().toJson(new SocketResponse(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, true)));
+      this.server.sendData(GsonSingleton.toJson(new SocketResponse(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, true)));
     }
 
     @Override

@@ -26,7 +26,7 @@ public class GetMyInfoTests
   public void testGetMyInfoSuccessfully() throws Exception
   {
     String jsonResponse = ServerConnection.getMyInfo(TestUsers.USER1);
-    GetMyInfoResponse response = GsonSingleton.get().fromJson(jsonResponse, GetMyInfoResponse.class);
+    GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
@@ -38,7 +38,7 @@ public class GetMyInfoTests
   public void testGetMyInfoWithBadAuthToken() throws Exception
   {
     String jsonResponse = ServerConnection.getMyInfo(TestUsers.USER1.email, "BAD_TOKEN");
-    ErrorResponse response = GsonSingleton.get().fromJson(jsonResponse, ErrorResponse.class);
+    ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
     assertEquals(false, response.result);
     assertEquals("400: Bad Request", response.error);
   }
@@ -48,7 +48,7 @@ public class GetMyInfoTests
   {
     ServerConnection.queueMatchmaking(TestUsers.USER1);
     String jsonResponse = ServerConnection.getMyInfo(TestUsers.USER1);
-    GetMyInfoResponse response = GsonSingleton.get().fromJson(jsonResponse, GetMyInfoResponse.class);
+    GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(true, response.isSearchingForGame);
@@ -62,7 +62,7 @@ public class GetMyInfoTests
     ServerConnection.queueMatchmaking(TestUsers.USER1);
     ServerConnection.queueMatchmaking(TestUsers.USER2);
     String jsonResponse = ServerConnection.getMyInfo(TestUsers.USER1);
-    GetMyInfoResponse response = GsonSingleton.get().fromJson(jsonResponse, GetMyInfoResponse.class);
+    GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNotNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
