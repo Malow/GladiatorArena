@@ -11,14 +11,10 @@ public class GladiatorArenaServerConfig
   public static final int GAME_ROUND_TIMEOUT_SECONDS = 30;
   public static final int POST_GAME_DURATION_SECONDS = 30;
   public static final int SLEEP_DURATION_BETWEEN_LOBBY_UPDATES_MILLISECONDS = 100;
-  //
+
+  // Request names for GameSocket network
   public static final String JOIN_GAME_REQUEST_NAME = "JoinGame";
   public static final String READY_REQUEST_NAME = "Ready";
   public static final String GAME_STATE_UPDATE_REQUEST_NAME = "GameUpdate";
   public static final String GAME_FINISHED_UPDATE_REQUEST_NAME = "GameFinsished";
-
-  public GladiatorArenaServerConfig()
-  {
-
-  }
 }

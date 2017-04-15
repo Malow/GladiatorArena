@@ -7,9 +7,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.database.AccountAccessor.WrongAuthentificationTokenException;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
-import com.github.malow.gladiatorarena.server.Globals;
 import com.github.malow.gladiatorarena.server.database.Match;
+import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.Player;
+import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
 import com.github.malow.gladiatorarena.server.game.GameInstance;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.Client;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
@@ -47,13 +48,13 @@ public class MatchHandler extends MaloWProcess
     try
     {
       Match match = new Match(p1, p2);
-      match = Globals.matchAccessor.create(match);
+      match = MatchAccessorSingleton.get().create(match);
       p1.isSearchingForGame = false;
       p2.isSearchingForGame = false;
       p1.currentMatchId = match.getId();
       p2.currentMatchId = match.getId();
-      Globals.playerAccessor.updateCacheOnly(p1);
-      Globals.playerAccessor.updateCacheOnly(p2);
+      PlayerAccessorSingleton.get().updateCacheOnly(p1);
+      PlayerAccessorSingleton.get().updateCacheOnly(p2);
 
       GameInstance game = new GameInstance(p1, p2, match);
       game.start();
@@ -66,8 +67,8 @@ public class MatchHandler extends MaloWProcess
       p2.isSearchingForGame = false;
       p1.currentMatchId = null;
       p2.currentMatchId = null;
-      Globals.playerAccessor.updateCacheOnly(p1);
-      Globals.playerAccessor.updateCacheOnly(p2);
+      PlayerAccessorSingleton.get().updateCacheOnly(p1);
+      PlayerAccessorSingleton.get().updateCacheOnly(p2);
     }
   }
 

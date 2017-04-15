@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.Optional;
 
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
-import com.github.malow.gladiatorarena.server.Globals;
 import com.github.malow.gladiatorarena.server.database.Match;
+import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.Player;
+import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.Client;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketGameFinishedUpdateRequest;
@@ -202,7 +203,7 @@ public class GameInstance extends MaloWProcess
     {
       try
       {
-        Globals.playerAccessor.update(p);
+        PlayerAccessorSingleton.get().update(p);
       }
       catch (UnexpectedException | ZeroRowsReturnedException | MultipleRowsReturnedException e)
       {
@@ -214,7 +215,7 @@ public class GameInstance extends MaloWProcess
     this.match.finishedAt = LocalDateTime.now();
     try
     {
-      Globals.matchAccessor.update(this.match);
+      MatchAccessorSingleton.get().update(this.match);
     }
     catch (UnexpectedException | ZeroRowsReturnedException | MultipleRowsReturnedException e)
     {

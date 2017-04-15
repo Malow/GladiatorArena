@@ -2,8 +2,8 @@ package com.github.malow.gladiatorarena.server.handlers;
 
 import com.github.malow.accountserver.comstructs.AuthorizedRequest;
 import com.github.malow.accountserver.comstructs.Response;
-import com.github.malow.gladiatorarena.server.Globals;
 import com.github.malow.gladiatorarena.server.comstructs.CreatePlayerRequest;
+import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.network.https.HttpsPostHandler;
 
@@ -14,7 +14,7 @@ public class HttpsHandlers
     @Override
     public String handleRequestAndGetResponse(String request)
     {
-      Globals.playerAccessor.clearCache();
+      PlayerAccessorSingleton.get().clearCache();
       MatchmakerHandler.clearQueue();
       return GsonSingleton.toJson(new Response(true));
     }
@@ -26,7 +26,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       CreatePlayerRequest req = createValidJsonRequest(request, CreatePlayerRequest.class);
-      Response resp = HttpsGameApiHandler.createPlayer(req);
+      Response resp = HttpsRequestHandler.createPlayer(req);
       return GsonSingleton.toJson(resp);
     }
   }
@@ -37,7 +37,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = HttpsGameApiHandler.getMyInfo(req);
+      Response resp = HttpsRequestHandler.getMyInfo(req);
       return GsonSingleton.toJson(resp);
     }
   }
@@ -48,7 +48,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = HttpsGameApiHandler.queueMatchmaking(req);
+      Response resp = HttpsRequestHandler.queueMatchmaking(req);
       return GsonSingleton.toJson(resp);
     }
   }
@@ -59,7 +59,7 @@ public class HttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = HttpsGameApiHandler.unqueueMatchmaking(req);
+      Response resp = HttpsRequestHandler.unqueueMatchmaking(req);
       return GsonSingleton.toJson(resp);
     }
   }

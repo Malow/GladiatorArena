@@ -7,6 +7,6 @@ public class MatchAccessor extends Accessor<Match>
 {
   public MatchAccessor(DatabaseConnection databaseConnection)
   {
-    super(databaseConnection, Match.class);
+    super(databaseConnection);
   }
 }

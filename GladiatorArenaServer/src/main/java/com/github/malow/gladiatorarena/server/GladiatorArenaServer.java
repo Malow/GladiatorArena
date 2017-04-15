@@ -4,6 +4,8 @@ import java.util.Scanner;
 
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
+import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
+import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.ClearCacheHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.CreatePlayerHandler;
@@ -53,6 +55,9 @@ public class GladiatorArenaServer
     MatchHandler.getInstance().start();
     socketListener = new SocketListener(7002);
     socketListener.start();
+
+    PlayerAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
+    MatchAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
 
     // Start AccountServer
     AccountServer.start(accountServerConfig);

@@ -20,7 +20,7 @@ public class PlayerAccessor extends Accessor<Player>
 
   public PlayerAccessor(DatabaseConnection databaseConnection)
   {
-    super(databaseConnection, Player.class);
+    super(databaseConnection);
     this.readByAccountIdStatements = this.createPreparedStatementPool("SELECT * FROM " + this.tableName + " WHERE accountId = ?");
   }
 
