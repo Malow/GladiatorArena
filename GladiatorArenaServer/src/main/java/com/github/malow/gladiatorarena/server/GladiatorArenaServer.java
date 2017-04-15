@@ -6,26 +6,27 @@ import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.ClearCacheHandler;
+import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.CreatePlayerHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.GetMyInfoHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.QueueMatchmakingHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.UnqueueMatchmakingHandler;
 import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
+import com.github.malow.malowlib.database.DatabaseConnection;
+import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
 import com.github.malow.malowlib.network.https.HttpsPostServer;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
 
 public class GladiatorArenaServer
 {
-  private static SocketListener socketListener;
-  private static HttpsPostServer gameHttpsServer;
 
   public static void main(String[] args)
   {
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
 
     HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
-    AccountServerConfig accountServerConfig = new AccountServerConfig("GladiatorArenaServer", "GladArUsr", "password", accountServerHttpsConfig,
-        "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
+    AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
+        accountServerHttpsConfig, "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
 
     HttpsPostServerConfig gameConfig = new HttpsPostServerConfig(7001, new LetsEncryptConfig("LetsEncryptCerts"), "password");
 
@@ -43,7 +44,10 @@ public class GladiatorArenaServer
     closeServer();
   }
 
-  public static void startServer(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServerConfig gameConfig)
+  private static SocketListener socketListener;
+  private static HttpsPostServer gameHttpsServer;
+
+  static void startServer(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServerConfig gameConfig)
   {
     // Setup SocketListener and GameInstanceHandler
     MatchHandler.getInstance().start();
@@ -55,6 +59,7 @@ public class GladiatorArenaServer
 
     // Start HttpsGameApiServer
     gameHttpsServer = new HttpsPostServer(gameConfig);
+    gameHttpsServer.createContext("/createplayer", new CreatePlayerHandler());
     gameHttpsServer.createContext("/getmyinfo", new GetMyInfoHandler());
     gameHttpsServer.createContext("/queuematchmaking", new QueueMatchmakingHandler());
     gameHttpsServer.createContext("/unqueuematchmaking", new UnqueueMatchmakingHandler());
@@ -65,7 +70,7 @@ public class GladiatorArenaServer
     gameHttpsServer.start();
   }
 
-  public static void closeServer()
+  static void closeServer()
   {
     AccountServer.close();
     gameHttpsServer.close();

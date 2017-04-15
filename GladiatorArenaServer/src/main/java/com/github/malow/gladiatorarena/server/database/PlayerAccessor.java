@@ -1,116 +1,97 @@
 package com.github.malow.gladiatorarena.server.database;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.github.malow.accountserver.database.AccountAccessor;
-import com.github.malow.accountserver.database.Database;
-import com.github.malow.accountserver.database.Database.UnexpectedException;
-import com.mysql.jdbc.Statement;
+import com.github.malow.malowlib.database.Accessor;
+import com.github.malow.malowlib.database.DatabaseConnection;
+import com.github.malow.malowlib.database.DatabaseExceptions.ForeignKeyException;
+import com.github.malow.malowlib.database.DatabaseExceptions.MissingMandatoryFieldException;
+import com.github.malow.malowlib.database.DatabaseExceptions.MultipleRowsReturnedException;
+import com.github.malow.malowlib.database.DatabaseExceptions.UnexpectedException;
+import com.github.malow.malowlib.database.DatabaseExceptions.UniqueException;
+import com.github.malow.malowlib.database.DatabaseExceptions.ZeroRowsReturnedException;
+import com.github.malow.malowlib.database.PreparedStatementPool;
 
-public class PlayerAccessor
+public class PlayerAccessor extends Accessor<Player>
 {
-  private static ConcurrentHashMap<Long, Player> cacheByAccountId = new ConcurrentHashMap<Long, Player>();
+  private ConcurrentHashMap<Integer, Player> cacheByAccountId = new ConcurrentHashMap<Integer, Player>();
+  private PreparedStatementPool readByAccountIdStatements;
 
-  public static Player read(Long accountId, String email) throws UnexpectedException
+  public PlayerAccessor(DatabaseConnection databaseConnection)
   {
-    Player a = cacheByAccountId.get(accountId);
-    if (a != null) return a;
-
-    try (PreparedStatement s1 = Database.getConnection().prepareStatement("SELECT * FROM Players WHERE account_id = ? ; "))
-    {
-      s1.setLong(1, accountId);
-      try (ResultSet s1Res = s1.executeQuery())
-      {
-        if (s1Res.next())
-        {
-          Long id = s1Res.getLong("id");
-          String username = s1Res.getString("username");
-          Integer rating = s1Res.getInt("rating");
-
-          Player player = new Player(id, accountId, username, rating);
-          s1Res.close();
-          s1.close();
-          cacheByAccountId.put(accountId, player);
-          return player;
-        }
-        else return create(new Player(AccountAccessor.read(email)));
-      }
-    }
-    catch (Exception e)
-    {
-      UnexpectedException ue = new UnexpectedException(e.toString());
-      ue.setStackTrace(e.getStackTrace());
-      throw ue;
-    }
+    super(databaseConnection, Player.class);
+    this.readByAccountIdStatements = this.createPreparedStatementPool("SELECT * FROM " + this.tableName + " WHERE accountId = ?");
   }
 
-  public static Player create(Player player) throws UnexpectedException
+  @Override
+  public Player create(Player player) throws UniqueException, ForeignKeyException, MissingMandatoryFieldException, UnexpectedException
   {
-    try (PreparedStatement s = Database.getConnection().prepareStatement("insert into Players values (default, ?, ?, ?);",
-        Statement.RETURN_GENERATED_KEYS))
+    player = super.create(player);
+    this.cacheByAccountId.put(player.accountId, player);
+    return player;
+  }
+
+  @Override
+  public Player read(Integer id) throws ZeroRowsReturnedException, MultipleRowsReturnedException, UnexpectedException
+  {
+    Player player = super.read(id);
+    this.cacheByAccountId.put(player.accountId, player);
+    return player;
+  }
+
+  @Override
+  public void update(Player player) throws ZeroRowsReturnedException, MultipleRowsReturnedException, UnexpectedException
+  {
+    super.update(player);
+    this.cacheByAccountId.put(player.accountId, player);
+  }
+
+  @Override
+  public void delete(Integer id) throws ZeroRowsReturnedException, MultipleRowsReturnedException, UnexpectedException
+  {
+    Player player = super.read(id);
+    super.delete(id);
+    this.cacheByAccountId.remove(player);
+  }
+
+  public Player readByAccountId(Integer accountId) throws ZeroRowsReturnedException, UnexpectedException
+  {
+    Player player = this.cacheByAccountId.get(accountId);
+    if (player != null)
     {
-      int i = 1;
-      s.setLong(i++, player.accountId);
-      s.setString(i++, player.username);
-      s.setInt(i++, player.rating);
-      int rowCount = s.executeUpdate();
-      try (ResultSet generatedKeys = s.getGeneratedKeys())
-      {
-        if ((rowCount != 0) && generatedKeys.next())
-        {
-          player.id = generatedKeys.getLong(1);
-          s.close();
-          cacheByAccountId.put(player.accountId, player);
-          return player;
-        }
-      }
+      return player;
+    }
+    PreparedStatement statement = null;
+    try
+    {
+      statement = this.readByAccountIdStatements.get();
+      statement.setInt(1, accountId);
+      player = this.readWithPopulatedStatement(statement);
+      this.cacheByAccountId.put(player.accountId, player);
+      this.readByAccountIdStatements.add(statement);
+      return player;
+    }
+    catch (ZeroRowsReturnedException e)
+    {
+      throw e;
     }
     catch (Exception e)
     {
-      UnexpectedException ue = new UnexpectedException(e.toString());
-      ue.setStackTrace(e.getStackTrace());
-      throw ue;
+      this.closeStatement(statement);
+      this.logAndReThrowUnexpectedException(
+          "Unexpected error when trying to read a " + this.entityClass.getSimpleName() + " with accountId " + accountId + " in accessor", e);
     }
     return null;
   }
 
-  public static boolean update(Player player) throws UnexpectedException
+  public void updateCacheOnly(Player player)
   {
-    try (
-        PreparedStatement s1 = Database.getConnection().prepareStatement("UPDATE Players SET account_id = ?, username = ?, rating = ? WHERE id = ?;"))
-    {
-      int i = 1;
-      s1.setLong(i++, player.accountId);
-      s1.setString(i++, player.username);
-      s1.setInt(i++, player.rating);
-      s1.setLong(i++, player.id);
-      int rowCount = s1.executeUpdate();
-      s1.close();
-
-      if (rowCount == 1)
-      {
-        cacheByAccountId.put(player.accountId, player);
-        return true;
-      }
-    }
-    catch (Exception e)
-    {
-      UnexpectedException ue = new UnexpectedException(e.toString());
-      ue.setStackTrace(e.getStackTrace());
-      throw ue;
-    }
-    return false;
+    this.cacheByAccountId.put(player.accountId, player);
   }
 
-  public static void updateCacheOnly(Player player)
+  public void clearCache()
   {
-    cacheByAccountId.put(player.accountId, player);
-  }
-
-  public static void clearCache()
-  {
-    cacheByAccountId.clear();
+    this.cacheByAccountId.clear();
   }
 }

@@ -5,6 +5,8 @@ import java.util.Scanner;
 import org.junit.Test;
 
 import com.github.malow.accountserver.AccountServerConfig;
+import com.github.malow.malowlib.database.DatabaseConnection;
+import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
 
@@ -17,8 +19,8 @@ public class GladiatorArenaServerForTests
     gladConfig.allowClearCacheOperation = true;
 
     HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
-    AccountServerConfig accountServerConfig = new AccountServerConfig("GladiatorArenaServer", "GladArUsr", "password", accountServerHttpsConfig,
-        "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
+    AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
+        accountServerHttpsConfig, "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
     accountServerConfig.enableEmailSending = false;
     accountServerConfig.allowClearCacheOperation = true;
 

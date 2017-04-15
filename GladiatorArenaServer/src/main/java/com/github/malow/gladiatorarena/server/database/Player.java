@@ -1,38 +1,20 @@
 package com.github.malow.gladiatorarena.server.database;
 
 import com.github.malow.accountserver.database.Account;
-import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
+import com.github.malow.malowlib.database.DatabaseTableEntity;
 
-public class Player
+public class Player extends DatabaseTableEntity
 {
-  // Persisted in database
-  public Long id;
-  public Long accountId;
+  @Unique
+  @ForeignKey(target = Account.class)
+  public Integer accountId;
+  @Unique
   public String username;
-  public Integer rating;
+  public Integer rating = 0;
 
   // Only cached in memory
-  public Long currentMatchId;
-  public boolean isSearchingForGame;
-
-  public Player()
-  {
-
-  }
-
-  public Player(Account acc)
-  {
-    this.accountId = acc.id;
-    this.username = acc.username;
-    this.rating = GladiatorArenaServerConfig.DEFAULT_RATING;
-  }
-
-  public Player(Long id, Long accountId, String username, Integer rating)
-  {
-    this.id = id;
-    this.accountId = accountId;
-    this.username = username;
-    this.rating = rating;
-  }
-
+  @NotPersisted
+  public Integer currentMatchId = null;
+  @NotPersisted
+  public boolean isSearchingForGame = false;
 }

@@ -1,16 +1,14 @@
 package com.github.malow.gladiatorarena.server.game;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
-import com.github.malow.accountserver.database.Database.UnexpectedException;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
+import com.github.malow.gladiatorarena.server.Globals;
 import com.github.malow.gladiatorarena.server.database.Match;
-import com.github.malow.gladiatorarena.server.database.MatchAccessor;
 import com.github.malow.gladiatorarena.server.database.Player;
-import com.github.malow.gladiatorarena.server.database.PlayerAccessor;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.Client;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketGameFinishedUpdateRequest;
@@ -20,8 +18,11 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Sock
 import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
-import com.github.malow.malowlib.MaloWProcess;
-import com.github.malow.malowlib.ProcessEvent;
+import com.github.malow.malowlib.database.DatabaseExceptions.MultipleRowsReturnedException;
+import com.github.malow.malowlib.database.DatabaseExceptions.UnexpectedException;
+import com.github.malow.malowlib.database.DatabaseExceptions.ZeroRowsReturnedException;
+import com.github.malow.malowlib.malowprocess.MaloWProcess;
+import com.github.malow.malowlib.malowprocess.ProcessEvent;
 
 public class GameInstance extends MaloWProcess
 {
@@ -29,10 +30,10 @@ public class GameInstance extends MaloWProcess
   private List<Client> clients;
   private Match match;
 
-  private Calendar roundStartedAt;
   private GameStatus status;
 
-  private Calendar endedAt;
+  private LocalDateTime roundStartedAt;
+  private LocalDateTime endedAt;
 
   public GameInstance(Player p1, Player p2, Match match)
   {
@@ -115,17 +116,19 @@ public class GameInstance extends MaloWProcess
     }
   }
 
-  private boolean checkTimedOut(Calendar from, int seconds)
+  private boolean checkTimedOut(LocalDateTime from, int seconds)
   {
-    Calendar timeout = from;
-    timeout.add(Calendar.SECOND, seconds);
-    if (timeout.compareTo(Calendar.getInstance()) <= 0) return true;
+    LocalDateTime timeout = from.plusSeconds(seconds);
+    if (timeout.isBefore(LocalDateTime.now()))
+    {
+      return true;
+    }
     return false;
   }
 
   private void tryStartGame()
   {
-    if ((this.clients.size() == this.players.size()) && this.clients.stream().allMatch(c -> c.ready))
+    if (this.clients.size() == this.players.size() && this.clients.stream().allMatch(c -> c.ready))
     {
       // generate map etc.
       this.nextTurn();
@@ -146,7 +149,7 @@ public class GameInstance extends MaloWProcess
 
   private void nextTurn()
   {
-    this.roundStartedAt = Calendar.getInstance();
+    this.roundStartedAt = LocalDateTime.now();
     this.clients.stream().forEach(c -> c.ready = false);
     this.clients.stream().forEach(
         c -> c.sendData(GsonSingleton.toJson(new SocketGameStateUpdateRequest(GladiatorArenaServerConfig.GAME_STATE_UPDATE_REQUEST_NAME, "test"))));
@@ -176,7 +179,10 @@ public class GameInstance extends MaloWProcess
 
   private GameNetworkPacket getGameNetworkPacket(ProcessEvent ev)
   {
-    if (ev instanceof GameNetworkPacket) return (GameNetworkPacket) ev;
+    if (ev instanceof GameNetworkPacket)
+    {
+      return (GameNetworkPacket) ev;
+    }
     MaloWLogger.error("Got a ProcessEvent that wasn't of type GameNetworkPacket", new Exception());
     return null;
   }
@@ -196,26 +202,26 @@ public class GameInstance extends MaloWProcess
     {
       try
       {
-        PlayerAccessor.update(p);
+        Globals.playerAccessor.update(p);
       }
-      catch (UnexpectedException e)
+      catch (UnexpectedException | ZeroRowsReturnedException | MultipleRowsReturnedException e)
       {
         MaloWLogger.error("Failed to update " + p.username, e);
       }
     });
 
     this.match.status = this.status;
-    this.match.finishedAt = Calendar.getInstance();
+    this.match.finishedAt = LocalDateTime.now();
     try
     {
-      MatchAccessor.update(this.match);
+      Globals.matchAccessor.update(this.match);
     }
-    catch (UnexpectedException e)
+    catch (UnexpectedException | ZeroRowsReturnedException | MultipleRowsReturnedException e)
     {
-      MaloWLogger.error("Failed to update match " + this.match.id, e);
+      MaloWLogger.error("Failed to update match " + this.match.getId(), e);
     }
-    MatchHandler.deleteEndedMatch(this.match.id);
-    this.endedAt = Calendar.getInstance();
+    MatchHandler.getInstance().deleteEndedMatch(this.match.getId());
+    this.endedAt = LocalDateTime.now();
   }
 
   private void calculateAndSetRatings(Player winner)
@@ -226,7 +232,7 @@ public class GameInstance extends MaloWProcess
       if (winner.equals(p))
       {
         p.rating += 100;
-        if (p.id.equals(this.match.player1Id))
+        if (p.getId().equals(this.match.player1Id))
         {
           this.match.ratingChangePlayer1 = 100;
         }
@@ -238,7 +244,7 @@ public class GameInstance extends MaloWProcess
       else
       {
         p.rating -= 100;
-        if (p.id.equals(this.match.player2Id))
+        if (p.getId().equals(this.match.player2Id))
         {
           this.match.ratingChangePlayer2 = -100;
         }

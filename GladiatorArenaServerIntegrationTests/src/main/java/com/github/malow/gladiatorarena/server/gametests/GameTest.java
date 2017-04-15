@@ -3,10 +3,10 @@ package com.github.malow.gladiatorarena.server.gametests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
+import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture;
 import com.github.malow.gladiatorarena.server.comstructs.GetMyInfoResponse;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketGameFinishedUpdateRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketGameStateUpdateRequest;
@@ -15,60 +15,54 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Sock
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
 import com.github.malow.gladiatorarena.server.testhelpers.Config;
 import com.github.malow.gladiatorarena.server.testhelpers.ServerConnection;
-import com.github.malow.gladiatorarena.server.testhelpers.TestHelpers;
-import com.github.malow.gladiatorarena.server.testhelpers.TestUsers;
-import com.github.malow.gladiatorarena.server.testhelpers.User;
 import com.github.malow.malowlib.GsonSingleton;
-import com.github.malow.malowlib.MaloWProcess;
+import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.network.NetworkChannel;
 import com.github.malow.malowlib.network.NetworkPacket;
 
-public class GameTest
+public class GameTest extends GladiatorArenaServerTestFixture
 {
-  @Before
-  public void setup() throws Exception
-  {
-    TestHelpers.beforeTest();
-  }
-
   @Test
   public void test() throws Exception
   {
-    ServerConnection.queueMatchmaking(TestUsers.USER1);
-    ServerConnection.queueMatchmaking(TestUsers.USER2);
-    long matchId = GsonSingleton.fromJson(ServerConnection.getMyInfo(TestUsers.USER1), GetMyInfoResponse.class).currentMatchId;
-    GameSocketClient p1 = new GameSocketClient(TestUsers.USER1, matchId);
+    ServerConnection.createPlayer(USER1);
+    ServerConnection.createPlayer(USER2);
+    ServerConnection.queueMatchmaking(USER1);
+    ServerConnection.queueMatchmaking(USER2);
+    Thread.sleep(1000);
+    Integer matchId = GsonSingleton.fromJson(ServerConnection.getMyInfo(USER1), GetMyInfoResponse.class).currentMatchId;
+    GameSocketClient p1 = new GameSocketClient(USER1, matchId);
     p1.start();
-    GameSocketClient p2 = new GameSocketClient(TestUsers.USER2, matchId);
+    GameSocketClient p2 = new GameSocketClient(USER2, matchId);
     p2.start();
     p1.waitUntillDone();
     p2.waitUntillDone();
 
-    String jsonResponse = ServerConnection.getMyInfo(TestUsers.USER1);
+    String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Integer.valueOf(-100), response.rating);
-    assertEquals(TestUsers.USER1.username, response.username);
+    assertEquals(USER1.username, response.username);
 
-    jsonResponse = ServerConnection.getMyInfo(TestUsers.USER2);
+    jsonResponse = ServerConnection.getMyInfo(USER2);
     response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNull(response.currentMatchId);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Integer.valueOf(100), response.rating);
-    assertEquals(TestUsers.USER2.username, response.username);
+    assertEquals(USER2.username, response.username);
   }
 
   private static class GameSocketClient extends MaloWProcess
   {
-    private Long gameId;
+    private Integer gameId;
     private String authToken;
     private String email;
     private NetworkChannel server;
 
-    public GameSocketClient(User user, Long gameId)
+    public GameSocketClient(TestUser user, Integer gameId)
     {
       this.email = user.email;
       this.authToken = user.authToken;
@@ -109,7 +103,7 @@ public class GameTest
       packet = (NetworkPacket) this.waitEvent();
       SocketGameFinishedUpdateRequest finishRequest = GsonSingleton.fromJson(packet.getMessage(), SocketGameFinishedUpdateRequest.class);
       assertEquals(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, finishRequest.method);
-      assertEquals(TestUsers.USER2.username, finishRequest.winnerUsername);
+      assertEquals(USER2.username, finishRequest.winnerUsername);
       this.server.sendData(GsonSingleton.toJson(new SocketResponse(GladiatorArenaServerConfig.GAME_FINISHED_UPDATE_REQUEST_NAME, true)));
     }
 
@@ -117,6 +111,5 @@ public class GameTest
     public void closeSpecific()
     {
     }
-
   }
 }

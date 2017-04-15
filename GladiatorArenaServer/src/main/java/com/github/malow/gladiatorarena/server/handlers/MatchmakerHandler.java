@@ -25,7 +25,7 @@ public class MatchmakerHandler
       if (other != null)
       {
         playerQueue.remove(other);
-        MatchHandler.createNewMatch(player, other);
+        MatchHandler.getInstance().createNewMatch(player, other);
       }
       else
       {
@@ -57,7 +57,10 @@ public class MatchmakerHandler
   {
     for (Player other : playerQueue)
     {
-      if (Math.abs(other.rating - player.rating) <= GladiatorArenaServerConfig.MATCHMAKING_MAX_RATING_DIFFERENCE) { return other; }
+      if (Math.abs(other.rating - player.rating) <= GladiatorArenaServerConfig.MATCHMAKING_MAX_RATING_DIFFERENCE)
+      {
+        return other;
+      }
     }
     return null;
   }

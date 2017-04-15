@@ -1,6 +1,6 @@
 package com.github.malow.gladiatorarena.server.game.socketnetwork;
 
-import com.github.malow.malowlib.ProcessEvent;
+import com.github.malow.malowlib.malowprocess.ProcessEvent;
 
 public class GameNetworkPacket extends ProcessEvent
 {

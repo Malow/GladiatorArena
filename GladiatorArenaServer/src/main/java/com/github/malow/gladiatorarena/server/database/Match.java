@@ -1,36 +1,40 @@
 package com.github.malow.gladiatorarena.server.database;
 
-import java.util.Calendar;
+import java.time.LocalDateTime;
 
 import com.github.malow.gladiatorarena.server.game.GameStatus;
+import com.github.malow.malowlib.database.DatabaseTableEntity;
 
-public class Match
+public class Match extends DatabaseTableEntity
 {
-  // Persisted in database
-  public Long id;
-  public Long player1Id;
-  public Long player2Id;
+  @ForeignKey(target = Player.class)
+  public Integer player1Id;
+  @ForeignKey(target = Player.class)
+  public Integer player2Id;
   public String username1;
   public String username2;
   public Integer ratingBeforePlayer1;
   public Integer ratingBeforePlayer2;
-  public Calendar createdAt;
+  public LocalDateTime createdAt;
   public GameStatus status;
+  @Optional
   public String winnerUsername;
+  @Optional
   public Integer ratingChangePlayer1;
+  @Optional
   public Integer ratingChangePlayer2;
-  public Calendar finishedAt;
+  @Optional
+  public LocalDateTime finishedAt;
 
-  public Match(Long id, Player p1, Player p2)
+  public Match(Player p1, Player p2)
   {
-    this.id = id;
-    this.player1Id = p1.id;
-    this.player2Id = p2.id;
+    this.player1Id = p1.getId();
+    this.player2Id = p2.getId();
     this.username1 = p1.username;
     this.username2 = p2.username;
     this.ratingBeforePlayer1 = p1.rating;
     this.ratingBeforePlayer2 = p2.rating;
     this.status = GameStatus.NOT_STARTED;
-    this.createdAt = Calendar.getInstance();
+    this.createdAt = LocalDateTime.now();
   }
 }

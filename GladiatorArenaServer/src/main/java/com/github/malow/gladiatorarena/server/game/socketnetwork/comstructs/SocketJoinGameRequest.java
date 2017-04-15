@@ -4,9 +4,9 @@ public class SocketJoinGameRequest extends SocketRequest
 {
   public String email;
   public String authToken;
-  public Long gameId;
+  public Integer gameId;
 
-  public SocketJoinGameRequest(String method, String email, String authToken, Long gameId)
+  public SocketJoinGameRequest(String method, String email, String authToken, Integer gameId)
   {
     super(method);
     this.email = email;
@@ -17,7 +17,10 @@ public class SocketJoinGameRequest extends SocketRequest
   @Override
   public boolean isValid()
   {
-    if (super.isValid() && this.email != null && this.authToken != null && this.gameId != null) return true;
+    if (super.isValid() && this.email != null && this.authToken != null && this.gameId != null)
+    {
+      return true;
+    }
     return false;
   }
 }
