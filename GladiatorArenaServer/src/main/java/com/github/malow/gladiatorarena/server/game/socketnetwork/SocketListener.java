@@ -2,7 +2,7 @@ package com.github.malow.gladiatorarena.server.game.socketnetwork;
 
 import java.net.Socket;
 
-import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
+import com.github.malow.gladiatorarena.server.handlers.MatchHandlerSingleton;
 import com.github.malow.malowlib.network.NetworkChannel;
 import com.github.malow.malowlib.network.NetworkServer;
 
@@ -16,7 +16,7 @@ public class SocketListener extends NetworkServer
   @Override
   public void clientConnected(NetworkChannel nc)
   {
-    MatchHandler.getInstance().clientConnected(nc);
+    MatchHandlerSingleton.get().clientConnected(nc);
   }
 
   @Override

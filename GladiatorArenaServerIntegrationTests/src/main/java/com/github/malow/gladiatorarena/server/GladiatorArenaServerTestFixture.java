@@ -6,6 +6,7 @@ import com.github.malow.accountserver.comstructs.account.LoginResponse;
 import com.github.malow.accountserver.database.Account;
 import com.github.malow.accountserver.database.AccountAccessor;
 import com.github.malow.gladiatorarena.server.database.MatchAccessor;
+import com.github.malow.gladiatorarena.server.database.MatchReferenceAccessor;
 import com.github.malow.gladiatorarena.server.database.PlayerAccessor;
 import com.github.malow.gladiatorarena.server.testhelpers.ServerConnection;
 import com.github.malow.malowlib.GsonSingleton;
@@ -40,6 +41,8 @@ public class GladiatorArenaServerTestFixture
       DatabaseConnection.get(DatabaseType.SQLITE_FILE, "../GladiatorArenaServer/GladiatorArena"));
   private static MatchAccessor matchAccessor = new MatchAccessor(
       DatabaseConnection.get(DatabaseType.SQLITE_FILE, "../GladiatorArenaServer/GladiatorArena"));
+  private static MatchReferenceAccessor matchReferenceAccessor = new MatchReferenceAccessor(
+      DatabaseConnection.get(DatabaseType.SQLITE_FILE, "../GladiatorArenaServer/GladiatorArena"));
 
   @Before
   public void beforeTest() throws Exception
@@ -55,6 +58,7 @@ public class GladiatorArenaServerTestFixture
 
   private void resetDatabase() throws Exception
   {
+    matchReferenceAccessor.createTable();
     matchAccessor.createTable();
     playerAccessor.createTable();
     accountAccessor.createTable();

@@ -1,10 +1,10 @@
 package com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs;
 
-public class SocketRequest
+public class SocketMessage
 {
   public String method;
 
-  public SocketRequest(String method)
+  public SocketMessage(String method)
   {
     this.method = method;
   }

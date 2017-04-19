@@ -1,6 +1,7 @@
 package com.github.malow.gladiatorarena.server.handlers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
@@ -25,7 +26,7 @@ public class MatchmakerHandler
       if (other != null)
       {
         playerQueue.remove(other);
-        MatchHandler.getInstance().createNewMatch(player, other);
+        MatchHandlerSingleton.get().createNewGame(Arrays.asList(player, other));
       }
       else
       {

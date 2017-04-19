@@ -14,7 +14,7 @@ public class Player extends DatabaseTableEntity
 
   // Only cached in memory
   @NotPersisted
-  public Integer currentMatchId = null;
+  public Integer currentGameId = null;
   @NotPersisted
   public boolean isSearchingForGame = false;
 }

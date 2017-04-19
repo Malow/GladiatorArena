@@ -67,7 +67,7 @@ public class HttpsRequestHandler
     {
       //NamedMutex example, Lock for "player:#{accountId}", otherwise multiple queues can be done
       Player player = PlayerAccessorSingleton.get().readByAccountId(req.accountId);
-      if (player.currentMatchId != null)
+      if (player.currentGameId != null)
       {
         return new ErrorResponse(false, ErrorMessages.ALREADY_HAVE_A_MATCH);
       }
@@ -99,7 +99,7 @@ public class HttpsRequestHandler
     {
       //NamedMutex example, Lock for "player:#{accountId}", otherwise multiple queues can be done
       Player player = PlayerAccessorSingleton.get().readByAccountId(req.accountId);
-      if (player.currentMatchId != null)
+      if (player.currentGameId != null)
       {
         return new ErrorResponse(false, ErrorMessages.ALREADY_HAVE_A_MATCH);
       }

@@ -15,7 +15,7 @@ public class GetMyInfoResponse extends Response
     super(result);
     this.username = player.username;
     this.rating = player.rating;
-    this.currentMatchId = player.currentMatchId;
+    this.currentMatchId = player.currentGameId;
     this.isSearchingForGame = player.isSearchingForGame;
   }
 

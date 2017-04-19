@@ -5,6 +5,7 @@ import java.util.Scanner;
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
+import com.github.malow.gladiatorarena.server.database.MatchReferenceAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.ClearCacheHandler;
@@ -12,7 +13,7 @@ import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.CreatePlaye
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.GetMyInfoHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.QueueMatchmakingHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.UnqueueMatchmakingHandler;
-import com.github.malow.gladiatorarena.server.handlers.MatchHandler;
+import com.github.malow.gladiatorarena.server.handlers.MatchHandlerSingleton;
 import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
 import com.github.malow.malowlib.network.https.HttpsPostServer;
@@ -51,18 +52,16 @@ public class GladiatorArenaServer
 
   static void startServer(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServerConfig gameConfig)
   {
-    // Setup SocketListener and GameInstanceHandler
-    MatchHandler.getInstance().start();
+    MatchHandlerSingleton.get().start();
     socketListener = new SocketListener(7002);
     socketListener.start();
 
     PlayerAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
     MatchAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
+    MatchReferenceAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
 
-    // Start AccountServer
     AccountServer.start(accountServerConfig);
 
-    // Start HttpsGameApiServer
     gameHttpsServer = new HttpsPostServer(gameConfig);
     gameHttpsServer.createContext("/createplayer", new CreatePlayerHandler());
     gameHttpsServer.createContext("/getmyinfo", new GetMyInfoHandler());
@@ -81,8 +80,8 @@ public class GladiatorArenaServer
     gameHttpsServer.close();
     socketListener.close();
     socketListener.waitUntillDone();
-    MatchHandler.getInstance().close();
-    MatchHandler.getInstance().waitUntillDone();
+    MatchHandlerSingleton.get().close();
+    MatchHandlerSingleton.get().waitUntillDone();
   }
 }
 

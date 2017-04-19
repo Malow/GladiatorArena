@@ -6,17 +6,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.database.AccountAccessor.WrongAuthentificationTokenException;
-import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
 import com.github.malow.gladiatorarena.server.database.Match;
 import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
+import com.github.malow.gladiatorarena.server.database.MatchReference;
+import com.github.malow.gladiatorarena.server.database.MatchReferenceAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.Player;
 import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
-import com.github.malow.gladiatorarena.server.game.GameInstance;
+import com.github.malow.gladiatorarena.server.game.Lobby;
+import com.github.malow.gladiatorarena.server.game.MatchResult;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.Client;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.MethodNames;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketErrorResponse;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketJoinGameRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.JoinGameRequest;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
@@ -25,56 +28,78 @@ import com.github.malow.malowlib.network.NetworkChannel;
 
 public class MatchHandler extends MaloWProcess
 {
-  private static MatchHandler INSTANCE;
-
   private List<Client> clients = new ArrayList<Client>();
-  private ConcurrentHashMap<Integer, GameInstance> games = new ConcurrentHashMap<Integer, GameInstance>();
+  private ConcurrentHashMap<Integer, Lobby> lobbies = new ConcurrentHashMap<Integer, Lobby>();
+  private static int nextGameId = 0;
 
-  private MatchHandler()
+  protected MatchHandler()
   {
   }
 
-  public static MatchHandler getInstance()
-  {
-    if (INSTANCE == null)
-    {
-      INSTANCE = new MatchHandler();
-    }
-    return INSTANCE;
-  }
-
-  public void createNewMatch(Player p1, Player p2)
+  public void createNewGame(List<Player> expectedPlayers)
   {
     try
     {
-      Match match = new Match(p1, p2);
-      match = MatchAccessorSingleton.get().create(match);
-      p1.isSearchingForGame = false;
-      p2.isSearchingForGame = false;
-      p1.currentMatchId = match.getId();
-      p2.currentMatchId = match.getId();
-      PlayerAccessorSingleton.get().updateCacheOnly(p1);
-      PlayerAccessorSingleton.get().updateCacheOnly(p2);
-
-      GameInstance game = new GameInstance(p1, p2, match);
-      game.start();
-      this.games.put(match.getId(), game);
+      int gameId = nextGameId++;
+      expectedPlayers.stream().forEach(p ->
+      {
+        p.isSearchingForGame = false;
+        p.currentGameId = gameId;
+        PlayerAccessorSingleton.get().updateCacheOnly(p);
+      });
+      Lobby lobby = new Lobby(gameId, expectedPlayers);
+      lobby.start();
+      this.lobbies.put(gameId, lobby);
     }
     catch (Exception e)
     {
-      MaloWLogger.error("Failed to create match", e);
-      p1.isSearchingForGame = false;
-      p2.isSearchingForGame = false;
-      p1.currentMatchId = null;
-      p2.currentMatchId = null;
-      PlayerAccessorSingleton.get().updateCacheOnly(p1);
-      PlayerAccessorSingleton.get().updateCacheOnly(p2);
+      MaloWLogger.error("Failed to create game", e);
+      expectedPlayers.stream().forEach(p ->
+      {
+        p.isSearchingForGame = false;
+        p.currentGameId = null;
+        PlayerAccessorSingleton.get().updateCacheOnly(p);
+      });
     }
   }
 
-  public void deleteEndedMatch(Integer matchId)
+  public void handleEndedGame(Integer gameId, MatchResult matchResult)
   {
-    this.games.remove(matchId);
+    this.lobbies.remove(gameId);
+    // Lock all players and update them
+    //String[] mutexNames = matchResult.players.keySet().stream().map(w -> w.toString()).collect(Collectors.toList());
+    //NamedMutexList mutexes = NamedMutexHandler.getAndLockMultipleLocksByNames(mutexNames);
+    try
+    {
+      Match match = new Match();
+      match = MatchAccessorSingleton.get().create(match);
+      Integer matchId = match.getId();
+      List<MatchReference> references = new ArrayList<>();
+      for (Player p : matchResult.players.keySet())
+      {
+        Player player = PlayerAccessorSingleton.get().read(p.getId());
+        MatchReference reference = new MatchReference();
+        reference.playerId = player.getId();
+        reference.matchId = matchId;
+        reference.isWinner = matchResult.players.get(p);
+        reference.ratingBefore = player.rating;
+        reference.ratingChange = reference.isWinner ? 100 : -100;
+        reference.username = player.username;
+        references.add(reference);
+        player.rating += reference.isWinner ? 100 : -100;
+        player.currentGameId = null;
+        PlayerAccessorSingleton.get().update(player);
+        MatchReferenceAccessorSingleton.get().create(reference);
+      }
+    }
+    catch (Exception e)
+    {
+      MaloWLogger.error("Unexpected error when handling ended game.", e);
+    }
+    finally
+    {
+      //mutexes.unlockAll();
+    }
   }
 
   @Override
@@ -86,10 +111,10 @@ public class MatchHandler extends MaloWProcess
       if (ev instanceof GameNetworkPacket)
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
-        SocketJoinGameRequest req = GsonSingleton.fromJson(packet.message, SocketJoinGameRequest.class);
+        JoinGameRequest req = GsonSingleton.fromJson(packet.message, JoinGameRequest.class);
         if (req != null && req.isValid())
         {
-          if (req.method.equals(GladiatorArenaServerConfig.JOIN_GAME_REQUEST_NAME))
+          if (req.method.equals(MethodNames.JOIN_GAME_REQUEST))
           {
             this.handleRequest(req, packet.client);
           }
@@ -106,16 +131,16 @@ public class MatchHandler extends MaloWProcess
     }
   }
 
-  private void handleRequest(SocketJoinGameRequest req, Client client)
+  private void handleRequest(JoinGameRequest req, Client client)
   {
     try
     {
       Integer accId = AccountServer.checkAuthentication(req.email, req.authToken);
-      client.accId = accId;
-      GameInstance game = this.games.get(req.gameId);
-      if (game != null && game.clientConnected(client))
+      client.playerId = PlayerAccessorSingleton.get().readByAccountId(accId).getId();
+      Lobby lobby = this.lobbies.get(req.gameId);
+      if (lobby != null && lobby.playerConnected(client))
       {
-        client.setNotifier(game);
+        client.setNotifier(lobby);
         this.clients.remove(client);
         client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, true)));
       }
@@ -128,6 +153,11 @@ public class MatchHandler extends MaloWProcess
     {
       client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
     }
+    catch (Exception e)
+    {
+      MaloWLogger.error("Unexpected error when player " + req.email + " tried to join game " + req.gameId, e);
+      client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
+    }
   }
 
   public void clientConnected(NetworkChannel nc)
@@ -137,10 +167,7 @@ public class MatchHandler extends MaloWProcess
       Client client = (Client) nc;
       client.setNotifier(this);
       client.start();
-      synchronized (this.clients)
-      {
-        this.clients.add(client);
-      }
+      this.clients.add(client);
     }
     else
     {
@@ -151,16 +178,13 @@ public class MatchHandler extends MaloWProcess
   @Override
   public void closeSpecific()
   {
-    synchronized (this.clients)
+    for (NetworkChannel client : this.clients)
     {
-      for (NetworkChannel client : this.clients)
-      {
-        client.close();
-      }
-      for (NetworkChannel client : this.clients)
-      {
-        client.waitUntillDone();
-      }
+      client.close();
+    }
+    for (NetworkChannel client : this.clients)
+    {
+      client.waitUntillDone();
     }
   }
 }
