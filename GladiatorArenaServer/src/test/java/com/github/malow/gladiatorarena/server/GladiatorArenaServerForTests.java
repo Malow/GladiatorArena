@@ -7,26 +7,28 @@ import org.junit.Test;
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
+import com.github.malow.malowlib.network.https.HttpsPostServer;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
-import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
+import com.github.malow.malowlib.network.https.HttpsPostServerConfig.JksFileConfig;
 
 public class GladiatorArenaServerForTests
 {
   @Test
   public void runForIntegrationTests()
   {
+    HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new JksFileConfig("https_key.jks"), "password");
+    HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
+    httpsServer.start();
+
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
     gladConfig.allowClearCacheOperation = true;
 
-    HttpsPostServerConfig accountServerHttpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
-        accountServerHttpsConfig, "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
+        "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
     accountServerConfig.enableEmailSending = false;
     accountServerConfig.allowClearCacheOperation = true;
 
-    HttpsPostServerConfig gameConfig = new HttpsPostServerConfig(7001, new LetsEncryptConfig("LetsEncryptCerts"), "password");
-
-    GladiatorArenaServer.startServer(gladConfig, accountServerConfig, gameConfig);
+    GladiatorArenaServer.start(gladConfig, accountServerConfig, httpsServer);
 
     String input = "";
     Scanner in = new Scanner(System.in);
@@ -37,6 +39,6 @@ public class GladiatorArenaServerForTests
     }
     in.close();
 
-    GladiatorArenaServer.closeServer();
+    GladiatorArenaServer.close();
   }
 }

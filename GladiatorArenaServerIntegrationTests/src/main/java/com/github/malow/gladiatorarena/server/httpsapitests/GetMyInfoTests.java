@@ -7,9 +7,10 @@ import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 import com.github.malow.accountserver.comstructs.ErrorResponse;
+import com.github.malow.gladiatorarena.server.ErrorMessages;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture;
+import com.github.malow.gladiatorarena.server.ServerConnection;
 import com.github.malow.gladiatorarena.server.comstructs.GetMyInfoResponse;
-import com.github.malow.gladiatorarena.server.testhelpers.ServerConnection;
 import com.github.malow.malowlib.GsonSingleton;
 
 public class GetMyInfoTests extends GladiatorArenaServerTestFixture
@@ -25,6 +26,15 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Integer.valueOf(0), response.rating);
     assertEquals(USER1.username, response.username);
+  }
+
+  @Test
+  public void testGetMyInfoWithoutPlayerCreated() throws Exception
+  {
+    String jsonResponse = ServerConnection.getMyInfo(USER1);
+    ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
+    assertEquals(false, response.result);
+    assertEquals(ErrorMessages.NO_PLAYER_FOUND, response.error);
   }
 
   @Test

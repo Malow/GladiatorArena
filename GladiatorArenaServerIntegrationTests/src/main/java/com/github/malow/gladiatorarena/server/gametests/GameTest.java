@@ -5,7 +5,9 @@ import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
+import com.github.malow.gladiatorarena.server.Config;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture;
+import com.github.malow.gladiatorarena.server.ServerConnection;
 import com.github.malow.gladiatorarena.server.comstructs.GetMyInfoResponse;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.MethodNames;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
@@ -14,8 +16,6 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.spec
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.GameFinishedUpdate;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.GameStateUpdate;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.JoinGameRequest;
-import com.github.malow.gladiatorarena.server.testhelpers.Config;
-import com.github.malow.gladiatorarena.server.testhelpers.ServerConnection;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.network.NetworkChannel;

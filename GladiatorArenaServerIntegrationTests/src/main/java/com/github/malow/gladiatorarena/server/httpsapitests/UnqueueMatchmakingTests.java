@@ -8,7 +8,7 @@ import com.github.malow.accountserver.comstructs.ErrorResponse;
 import com.github.malow.accountserver.comstructs.Response;
 import com.github.malow.gladiatorarena.server.ErrorMessages;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture;
-import com.github.malow.gladiatorarena.server.testhelpers.ServerConnection;
+import com.github.malow.gladiatorarena.server.ServerConnection;
 import com.github.malow.malowlib.GsonSingleton;
 
 public class UnqueueMatchmakingTests extends GladiatorArenaServerTestFixture

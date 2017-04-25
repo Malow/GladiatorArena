@@ -8,7 +8,6 @@ import com.github.malow.accountserver.database.AccountAccessor;
 import com.github.malow.gladiatorarena.server.database.MatchAccessor;
 import com.github.malow.gladiatorarena.server.database.MatchReferenceAccessor;
 import com.github.malow.gladiatorarena.server.database.PlayerAccessor;
-import com.github.malow.gladiatorarena.server.testhelpers.ServerConnection;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
@@ -48,7 +47,7 @@ public class GladiatorArenaServerTestFixture
   public void beforeTest() throws Exception
   {
     this.resetDatabase();
-    ServerConnection.clearCache();
+    ServerConnection.clearCaches();
 
     this.seedAccountTable();
 
