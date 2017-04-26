@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+	<body>
+		<h1><%= @username %></h1>
+		<p>Rating: <%= @rating %></p>
+		<p>IsSearchingForGame: <%= @isSearchingForGame %></p>
+		<p>CurrentGameId: <%= @currentGameId %></p>
+		
+		<% if @isSearchingForGame %>
+			<%= form_tag("/leavequeue", method: "post") do %>
+			  <%= submit_tag("Leave Queue") %>
+			<% end %>
+		<% else %>
+			<%= form_tag("/joinqueue", method: "post") do %>
+			  <%= submit_tag("Join Queue") %>
+			<% end %>
+		<% end %>
+		
+		<% if @error %>
+			<p>Error: <%= @error %> </p>
+		<% end %>
+		
+		<br/>
+		<a href="/logout">Logout</a> 
+	</body>
+</html>

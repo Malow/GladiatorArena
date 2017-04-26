@@ -18,14 +18,14 @@ import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
 import com.github.malow.malowlib.network.https.HttpsPostServer;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
-import com.github.malow.malowlib.network.https.HttpsPostServerConfig.JksFileConfig;
+import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
 
 public class GladiatorArenaServer
 {
 
   public static void main(String[] args)
   {
-    HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new JksFileConfig("https_key.jks"), "password");
+    HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
     httpsServer.start();
 

@@ -33,7 +33,7 @@ public class GameTest extends GladiatorArenaServerTestFixture
 
     Thread.sleep(1000);
 
-    Integer matchId = GsonSingleton.fromJson(ServerConnection.getMyInfo(USER1), GetMyInfoResponse.class).currentMatchId;
+    Integer matchId = GsonSingleton.fromJson(ServerConnection.getMyInfo(USER1), GetMyInfoResponse.class).currentGameId;
     GameSocketClient p1 = new GameSocketClient(USER1, matchId);
     p1.start();
     GameSocketClient p2 = new GameSocketClient(USER2, matchId);
@@ -46,7 +46,7 @@ public class GameTest extends GladiatorArenaServerTestFixture
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
-    assertNull(response.currentMatchId);
+    assertNull(response.currentGameId);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Integer.valueOf(100), response.rating);
     assertEquals(USER1.username, response.username);
@@ -54,7 +54,7 @@ public class GameTest extends GladiatorArenaServerTestFixture
     jsonResponse = ServerConnection.getMyInfo(USER2);
     response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
-    assertNull(response.currentMatchId);
+    assertNull(response.currentGameId);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Integer.valueOf(-100), response.rating);
     assertEquals(USER2.username, response.username);
