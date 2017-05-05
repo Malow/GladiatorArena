@@ -14,6 +14,7 @@ import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.GetMyInfoHa
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.QueueMatchmakingHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.UnqueueMatchmakingHandler;
 import com.github.malow.gladiatorarena.server.handlers.MatchHandlerSingleton;
+import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
 import com.github.malow.malowlib.network.https.HttpsPostServer;
@@ -22,7 +23,6 @@ import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncrypt
 
 public class GladiatorArenaServer
 {
-
   public static void main(String[] args)
   {
     HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
@@ -33,6 +33,8 @@ public class GladiatorArenaServer
 
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
         "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
+    // DEFAULT EMAIL SENDING TO FALSE FOR STAGING
+    accountServerConfig.enableEmailSending = false;
 
     start(gladConfig, accountServerConfig, httpsServer);
 
@@ -42,6 +44,7 @@ public class GladiatorArenaServer
     {
       System.out.print("> ");
       input = in.next();
+      handleInput(input);
     }
     in.close();
 
@@ -53,7 +56,7 @@ public class GladiatorArenaServer
   static void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServer httpsServer)
   {
     MatchHandlerSingleton.get().start();
-    socketListener = new SocketListener(7002);
+    socketListener = new SocketListener(7001);
     socketListener.start();
 
     PlayerAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
@@ -79,5 +82,35 @@ public class GladiatorArenaServer
     socketListener.waitUntillDone();
     MatchHandlerSingleton.get().close();
     MatchHandlerSingleton.get().waitUntillDone();
+  }
+
+  static void handleInput(String command)
+  {
+    try
+    {
+      if (command.equals("createDatabases"))
+      {
+        PlayerAccessorSingleton.get().createTable();
+        MatchAccessorSingleton.get().createTable();
+        MatchReferenceAccessorSingleton.get().createTable();
+        AccountServer.createDatabases();
+      }
+      else if (command.equals("enableEmails"))
+      {
+        AccountServer.enableEmailSending();
+      }
+      else if (command.equals("disableEmails"))
+      {
+        AccountServer.disableEmailSending();
+      }
+      else
+      {
+        throw new Exception("Unsupported command");
+      }
+    }
+    catch (Exception e)
+    {
+      MaloWLogger.error("Error while handling input: " + command + ". Error: ", e);
+    }
   }
 }
