@@ -2,8 +2,8 @@ package com.github.malow.gladiatorarena.server.handlers;
 
 import com.github.malow.accountserver.comstructs.AuthorizedRequest;
 import com.github.malow.accountserver.comstructs.Response;
-import com.github.malow.gladiatorarena.server.comstructs.CreatePlayerRequest;
-import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
+import com.github.malow.gladiatorarena.server.comstructs.CreateUserRequest;
+import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.network.https.HttpsPostHandler;
 
@@ -14,19 +14,19 @@ public class HttpsHandlers
     @Override
     public String handleRequestAndGetResponse(String request)
     {
-      PlayerAccessorSingleton.get().clearCache();
+      UserAccessorSingleton.get().clearCache();
       MatchmakerHandler.clearQueue();
       return GsonSingleton.toJson(new Response(true));
     }
   }
 
-  public static class CreatePlayerHandler extends HttpsPostHandler
+  public static class CreateUserHandler extends HttpsPostHandler
   {
     @Override
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
-      CreatePlayerRequest req = createValidJsonRequest(request, CreatePlayerRequest.class);
-      Response resp = HttpsRequestHandler.createPlayer(req);
+      CreateUserRequest req = createValidJsonRequest(request, CreateUserRequest.class);
+      Response resp = HttpsRequestHandler.createUser(req);
       return GsonSingleton.toJson(resp);
     }
   }

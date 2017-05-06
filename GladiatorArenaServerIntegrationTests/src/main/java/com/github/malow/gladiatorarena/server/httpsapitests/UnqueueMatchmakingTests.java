@@ -16,7 +16,7 @@ public class UnqueueMatchmakingTests extends GladiatorArenaServerTestFixture
   @Test
   public void testUnqueueMatchmakingSuccessfully() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
+    ServerConnection.createUser(USER1);
     ServerConnection.queueMatchmaking(USER1);
     String jsonResponse = ServerConnection.unqueueMatchmaking(USER1);
     Response response = GsonSingleton.fromJson(jsonResponse, Response.class);
@@ -26,7 +26,7 @@ public class UnqueueMatchmakingTests extends GladiatorArenaServerTestFixture
   @Test
   public void testUnqueueMatchmakingFailsWhenNotQueued() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
+    ServerConnection.createUser(USER1);
     String jsonResponse = ServerConnection.unqueueMatchmaking(USER1);
     ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
     assertEquals(false, response.result);
@@ -36,8 +36,8 @@ public class UnqueueMatchmakingTests extends GladiatorArenaServerTestFixture
   @Test
   public void testUnqueueMatchmakingFailsWhenAlreadyHaveOngoingMatch() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
-    ServerConnection.createPlayer(USER2);
+    ServerConnection.createUser(USER1);
+    ServerConnection.createUser(USER2);
     ServerConnection.queueMatchmaking(USER1);
     ServerConnection.queueMatchmaking(USER2);
 

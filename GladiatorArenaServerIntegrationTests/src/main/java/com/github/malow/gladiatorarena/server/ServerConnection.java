@@ -3,7 +3,7 @@ package com.github.malow.gladiatorarena.server;
 import com.github.malow.accountserver.comstructs.AuthorizedRequest;
 import com.github.malow.accountserver.comstructs.account.LoginRequest;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture.TestUser;
-import com.github.malow.gladiatorarena.server.comstructs.CreatePlayerRequest;
+import com.github.malow.gladiatorarena.server.comstructs.CreateUserRequest;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.network.https.HttpsPostClient;
 
@@ -17,15 +17,15 @@ public class ServerConnection
     return httpsClient.sendMessage("/account/login", request);
   }
 
-  public static String createPlayer(TestUser user) throws Exception
+  public static String createUser(TestUser user) throws Exception
   {
-    return createPlayer(user.email, user.authToken, user.username);
+    return createUser(user.email, user.authToken, user.username);
   }
 
-  public static String createPlayer(String email, String authToken, String username) throws Exception
+  public static String createUser(String email, String authToken, String username) throws Exception
   {
-    String request = GsonSingleton.toJson(new CreatePlayerRequest(email, authToken, username));
-    return httpsClient.sendMessage("/createplayer", request);
+    String request = GsonSingleton.toJson(new CreateUserRequest(email, authToken, username));
+    return httpsClient.sendMessage("/createuser", request);
   }
 
   public static String getMyInfo(TestUser user) throws Exception

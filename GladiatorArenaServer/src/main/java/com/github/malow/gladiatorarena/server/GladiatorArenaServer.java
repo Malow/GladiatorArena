@@ -6,10 +6,10 @@ import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.MatchReferenceAccessorSingleton;
-import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
+import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.ClearCacheHandler;
-import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.CreatePlayerHandler;
+import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.CreateUserHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.GetMyInfoHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.QueueMatchmakingHandler;
 import com.github.malow.gladiatorarena.server.handlers.HttpsHandlers.UnqueueMatchmakingHandler;
@@ -59,13 +59,13 @@ public class GladiatorArenaServer
     socketListener = new SocketListener(7001);
     socketListener.start();
 
-    PlayerAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
+    UserAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
     MatchAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
     MatchReferenceAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
 
     AccountServer.start(accountServerConfig, httpsServer);
 
-    httpsServer.createContext("/createplayer", new CreatePlayerHandler());
+    httpsServer.createContext("/createuser", new CreateUserHandler());
     httpsServer.createContext("/getmyinfo", new GetMyInfoHandler());
     httpsServer.createContext("/queuematchmaking", new QueueMatchmakingHandler());
     httpsServer.createContext("/unqueuematchmaking", new UnqueueMatchmakingHandler());
@@ -90,7 +90,7 @@ public class GladiatorArenaServer
     {
       if (command.equals("createDatabases"))
       {
-        PlayerAccessorSingleton.get().createTable();
+        UserAccessorSingleton.get().createTable();
         MatchAccessorSingleton.get().createTable();
         MatchReferenceAccessorSingleton.get().createTable();
         AccountServer.createDatabases();

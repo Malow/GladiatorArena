@@ -4,7 +4,7 @@ public class SocketResponse extends SocketMessage
 {
   public boolean result;
 
-  public SocketResponse(String method, boolean result)
+  public SocketResponse(SocketMethod method, boolean result)
   {
     super(method);
     this.result = result;

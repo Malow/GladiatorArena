@@ -16,7 +16,7 @@ public class SocketListener extends NetworkServer
   @Override
   public void clientConnected(NetworkChannel nc)
   {
-    MatchHandlerSingleton.get().clientConnected(nc);
+    MatchHandlerSingleton.get().playerConnected(nc);
   }
 
   @Override

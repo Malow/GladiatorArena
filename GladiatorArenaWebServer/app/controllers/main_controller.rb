@@ -20,8 +20,8 @@ class MainController < ApplicationController
 					@isSearchingForGame = response["isSearchingForGame"]
 					@currentGameId = response["currentGameId"]
 				else
-					if response["error"] == "No player found for account"
-						redirect_to "/create_player"
+					if response["error"] == "No user found for account"
+						redirect_to "/create_user"
 					else
 						@error = response["error"]
 					end
@@ -66,14 +66,14 @@ class MainController < ApplicationController
 		end
 	end
 	
-	def create_player
+	def create_user
 		if request.post?
 			username = params[:username]
 			email = session[:email]
 			authToken = session[:authToken]
 			if not email.blank? and not authToken.blank?
 				request = {'email' => email, 'authToken' => authToken, 'username' => username}.to_json
-				response = JSON.parse(RestClient.post "https://malow.duckdns.org:7000/createplayer", request)
+				response = JSON.parse(RestClient.post "https://malow.duckdns.org:7000/createuser", request)
 				if response["result"]
 					redirect_to "/main"
 				else

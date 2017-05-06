@@ -11,25 +11,25 @@ import com.github.malow.malowlib.database.PreparedStatementPool;
 
 public class MatchReferenceAccessor extends Accessor<MatchReference>
 {
-  private PreparedStatementPool readMultipleByPlayerIdStatements;
+  private PreparedStatementPool readMultipleByUserIdStatements;
   private PreparedStatementPool readMultipleByMatchIdStatements;
 
   public MatchReferenceAccessor(DatabaseConnection databaseConnection)
   {
     super(databaseConnection);
-    this.readMultipleByPlayerIdStatements = this.createPreparedStatementPool("SELECT * FROM " + this.tableName + " WHERE playerId = ?");
+    this.readMultipleByUserIdStatements = this.createPreparedStatementPool("SELECT * FROM " + this.tableName + " WHERE userId = ?");
     this.readMultipleByMatchIdStatements = this.createPreparedStatementPool("SELECT * FROM " + this.tableName + " WHERE matchId = ?");
   }
 
-  public List<MatchReference> readMultipleByPlayer(Integer playerId) throws ZeroRowsReturnedException, UnexpectedException
+  public List<MatchReference> readMultipleByUser(Integer userId) throws ZeroRowsReturnedException, UnexpectedException
   {
     PreparedStatement statement = null;
     try
     {
-      statement = this.readMultipleByPlayerIdStatements.get();
-      statement.setInt(1, playerId);
+      statement = this.readMultipleByUserIdStatements.get();
+      statement.setInt(1, userId);
       List<MatchReference> references = this.readMultipleWithPopulatedStatement(statement);
-      this.readMultipleByPlayerIdStatements.add(statement);
+      this.readMultipleByUserIdStatements.add(statement);
       return references;
     }
     catch (ZeroRowsReturnedException e)
@@ -40,7 +40,7 @@ public class MatchReferenceAccessor extends Accessor<MatchReference>
     {
       this.closeStatement(statement);
       this.logAndReThrowUnexpectedException(
-          "Unexpected error when trying to read a " + this.entityClass.getSimpleName() + " with playerId " + playerId + " in accessor", e);
+          "Unexpected error when trying to read a " + this.entityClass.getSimpleName() + " with userId " + userId + " in accessor", e);
     }
     return null;
   }

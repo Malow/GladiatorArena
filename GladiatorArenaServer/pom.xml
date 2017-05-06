@@ -30,6 +30,11 @@
   <dependencies>
   	<dependency>
       <groupId>com.github.malow</groupId>
+  	  <artifactId>GladiatorArenaGameCore</artifactId>
+  	  <version>1.0</version>
+  	</dependency>
+  	<dependency>
+      <groupId>com.github.malow</groupId>
   	  <artifactId>AccountServer</artifactId>
   	  <version>1.0</version>
   	</dependency>

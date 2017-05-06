@@ -4,8 +4,8 @@ import com.github.malow.malowlib.database.DatabaseTableEntity;
 
 public class MatchReference extends DatabaseTableEntity
 {
-  @ForeignKey(target = Player.class)
-  public Integer playerId;
+  @ForeignKey(target = User.class)
+  public Integer userId;
   @ForeignKey(target = Match.class)
   public Integer matchId;
   public Boolean isWinner;

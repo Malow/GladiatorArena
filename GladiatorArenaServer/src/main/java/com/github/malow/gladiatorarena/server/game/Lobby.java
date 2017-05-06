@@ -7,11 +7,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.github.malow.gladiatorarena.gamecore.GameInstance;
+import com.github.malow.gladiatorarena.gamecore.GameResult;
+import com.github.malow.gladiatorarena.gamecore.message.Action;
+import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
+import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
+import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
-import com.github.malow.gladiatorarena.server.database.Player;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.Client;
+import com.github.malow.gladiatorarena.server.database.User;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.MethodNames;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
 import com.github.malow.gladiatorarena.server.handlers.MatchHandlerSingleton;
@@ -23,8 +28,8 @@ import com.github.malow.malowlib.malowprocess.ProcessEvent;
 public class Lobby extends MaloWProcess
 {
   private int id;
-  private List<Player> players;
-  private List<Client> clients = new ArrayList<>();
+  private List<User> users;
+  private List<NetworkPlayer> players = new ArrayList<>();
   private LocalDateTime created;
   private LocalDateTime ended;
   private GameInstance game;
@@ -32,29 +37,28 @@ public class Lobby extends MaloWProcess
   private long lastGameUpdate = 0;
   //private long lastPing = 0;
 
-  public Lobby(int id, List<Player> expectedPlayers)
+  public Lobby(int id, List<User> expectedUsers)
   {
     this.id = id;
-    this.players = expectedPlayers;
+    this.users = expectedUsers;
     this.created = LocalDateTime.now();
     this.game = new GameInstance();
   }
 
-  public boolean playerConnected(Client client)
+  public boolean userConnected(NetworkPlayer player)
   {
-    Optional<Player> matchingPlayer = this.players.stream().filter(p -> p.getId().equals(client.playerId)).findFirst();
-    if (matchingPlayer.isPresent())
+    Optional<User> matchingUser = this.users.stream().filter(p -> p.getId().equals(player.userId)).findFirst();
+    if (matchingUser.isPresent())
     {
-      Optional<Client> matchingClient = this.clients.stream().filter(c -> c.playerId.equals(client.playerId)).findFirst();
-      if (matchingClient.isPresent())
+      Optional<NetworkPlayer> matchingPlayer = this.players.stream().filter(p -> p.userId.equals(player.userId)).findFirst();
+      if (matchingPlayer.isPresent())
       {
-        matchingClient.get().setNotifier(null);
-        matchingClient.get().close();
-        this.clients.remove(matchingClient.get());
+        matchingPlayer.get().client.setNotifier(null);
+        matchingPlayer.get().client.close();
+        this.players.remove(matchingPlayer.get());
       }
-      client.username = matchingPlayer.get().username;
-      this.clients.add(client);
-      this.game.addClient(client);
+      this.players.add(player);
+      this.game.addPlayer(player);
       return true;
     }
     return false;
@@ -79,7 +83,7 @@ public class Lobby extends MaloWProcess
       switch (this.status)
       {
         case NOT_STARTED:
-          if (this.isAllPlayersConnected() && this.isAllPlayersReady())
+          if (this.isAllUsersConnected() && this.isAllUsersReady())
           {
             this.status = GameStatus.IN_PROGRESS;
             this.game.start();
@@ -91,7 +95,7 @@ public class Lobby extends MaloWProcess
           }
           this.sleep();
         case PAUSED_FOR_RECONNECT:
-          if (this.isAllPlayersConnected() && this.isAllPlayersReady())
+          if (this.isAllUsersConnected() && this.isAllUsersReady())
           {
             this.status = GameStatus.IN_PROGRESS;
             this.lastGameUpdate = System.currentTimeMillis();
@@ -103,7 +107,7 @@ public class Lobby extends MaloWProcess
           this.sleep();
           break;
         case IN_PROGRESS:
-          if (this.isAllPlayersConnected())
+          if (this.isAllUsersConnected())
           {
             Optional<GameResult> gameResult = this.game.update(System.currentTimeMillis() - this.lastGameUpdate);
             this.lastGameUpdate = System.currentTimeMillis();
@@ -111,12 +115,12 @@ public class Lobby extends MaloWProcess
             {
               this.status = GameStatus.FINISHED;
               this.ended = LocalDateTime.now();
-              Map<Player, Boolean> players = new HashMap<Player, Boolean>();
-              gameResult.get().winners.stream().map(w -> this.players.stream().filter(p -> p.getId().equals(w.playerId)).findFirst().get())
-                  .forEach(p -> players.put(p, true));
-              gameResult.get().losers.stream().map(w -> this.players.stream().filter(p -> p.getId().equals(w.playerId)).findFirst().get())
-                  .forEach(p -> players.put(p, false));
-              MatchResult matchResult = new MatchResult(players);
+              Map<User, Boolean> users = new HashMap<User, Boolean>();
+              gameResult.get().winners.stream().map(w -> this.users.stream().filter(p -> p.username.equals(w.username)).findFirst().get())
+                  .forEach(p -> users.put(p, true));
+              gameResult.get().losers.stream().map(w -> this.users.stream().filter(p -> p.username.equals(w.username)).findFirst().get())
+                  .forEach(p -> users.put(p, false));
+              MatchResult matchResult = new MatchResult(users);
               MatchHandlerSingleton.get().handleEndedGame(this.id, matchResult);
             }
           }
@@ -127,7 +131,7 @@ public class Lobby extends MaloWProcess
           break;
         case FINISHED:
         case TIMED_OUT:
-          if (this.clients.stream().allMatch(c -> c.disconnected)
+          if (this.players.stream().allMatch(c -> c.disconnected)
               || this.isTimedOut(this.ended, GladiatorArenaServerConfig.POST_GAME_DURATION_SECONDS))
           {
             this.close();
@@ -157,34 +161,55 @@ public class Lobby extends MaloWProcess
     return from.plusSeconds(seconds).isBefore(LocalDateTime.now());
   }
 
-  private boolean isAllPlayersReady()
+  private boolean isAllUsersReady()
   {
-    return this.clients.stream().allMatch(c -> c.ready);
+    return this.players.stream().allMatch(c -> c.ready);
   }
 
-  private boolean isAllPlayersConnected()
+  private boolean isAllUsersConnected()
   {
-    return this.clients.size() == this.players.size();
+    return this.players.size() == this.users.size();
   }
 
   private void handlePacket(GameNetworkPacket packet)
   {
     SocketMessage message = GsonSingleton.fromJson(packet.message, SocketMessage.class);
+    NetworkPlayer from = this.getNetworkPlayerByUserId(packet.client.userId);
     switch (message.method)
     {
-      case MethodNames.READY:
-        packet.client.ready = true;
-        packet.client.sendData(GsonSingleton.toJson(new SocketResponse(message.method, true)));
+      case READY:
+        from.ready = true;
+        from.client.sendData(GsonSingleton.toJson(new SocketResponse(message.method, true)));
         break;
-      case MethodNames.GAME_FINISHED_UPDATE:
-        packet.client.disconnected = true;
-        break;
-      case MethodNames.GAME_STATE_UPDATE:
-        // Just acks, do nothing
+      case GAME_MESSAGE:
+        this.handleGameMessage(GsonSingleton.fromJson(packet.message, GameMessage.class), from);
         break;
       default:
-        this.game.handleMessage(message, packet.client);
+        MaloWLogger.error("Recieved a GameNetworkPacket with unkown method: " + message.method, new Exception());
     }
+  }
+
+  private void handleGameMessage(GameMessage gameMessage, NetworkPlayer from)
+  {
+    switch (gameMessage.gameMethod)
+    {
+      case ACTION:
+        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, Action.class), from.username);
+        break;
+      case FINISH_TURN:
+        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, FinishTurn.class), from.username);
+        break;
+      case GAME_FINISHED_UPDATE:
+        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, GameFinishedUpdate.class), from.username);
+        break;
+      case GAME_STATE_UPDATE:
+        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, GameStateUpdate.class), from.username);
+        break;
+      default:
+        MaloWLogger.error("Recieved a GameMessage with unkown method: " + gameMessage.gameMethod, new Exception());
+        break;
+    }
+
   }
 
   private GameNetworkPacket getGameNetworkPacket(ProcessEvent ev)
@@ -197,10 +222,15 @@ public class Lobby extends MaloWProcess
     return null;
   }
 
+  private NetworkPlayer getNetworkPlayerByUserId(Integer userId)
+  {
+    return this.players.stream().filter(p -> p.userId.equals(userId)).findFirst().get();
+  }
+
   @Override
   public void closeSpecific()
   {
-    this.clients.stream().forEach(c -> c.close());
-    this.clients.stream().forEach(c -> c.waitUntillDone());
+    this.players.stream().forEach(c -> c.client.close());
+    this.players.stream().forEach(c -> c.client.waitUntillDone());
   }
 }

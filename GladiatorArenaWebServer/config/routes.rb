@@ -8,8 +8,8 @@ Rails.application.routes.draw do
 	get "/register" => "main#register"
 	post "/register" => "main#register"
   
-	get "/create_player" => "main#create_player"
-	post "/create_player" => "main#create_player"
+	get "/create_user" => "main#create_user"
+	post "/create_user" => "main#create_user"
 	
 	get "/logout" => "main#logout"
 	

@@ -18,7 +18,7 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
   @Test
   public void testGetMyInfoSuccessfully() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
+    ServerConnection.createUser(USER1);
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
@@ -29,18 +29,18 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
   }
 
   @Test
-  public void testGetMyInfoWithoutPlayerCreated() throws Exception
+  public void testGetMyInfoWithoutUserCreated() throws Exception
   {
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
     assertEquals(false, response.result);
-    assertEquals(ErrorMessages.NO_PLAYER_FOUND, response.error);
+    assertEquals(ErrorMessages.NO_USER_FOUND, response.error);
   }
 
   @Test
   public void testGetMyInfoWithBadAuthToken() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
+    ServerConnection.createUser(USER1);
     String jsonResponse = ServerConnection.getMyInfo(USER1.email, "BAD_TOKEN");
     ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
     assertEquals(false, response.result);
@@ -50,7 +50,7 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
   @Test
   public void testGetMyInfoReturnsCorrectDataAfterSearchingForGame() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
+    ServerConnection.createUser(USER1);
     ServerConnection.queueMatchmaking(USER1);
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
@@ -64,8 +64,8 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
   @Test
   public void testGetMyInfoReutnsCorrectDataAfterFindingGame() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
-    ServerConnection.createPlayer(USER2);
+    ServerConnection.createUser(USER1);
+    ServerConnection.createUser(USER2);
     ServerConnection.queueMatchmaking(USER1);
     ServerConnection.queueMatchmaking(USER2);
     String jsonResponse = ServerConnection.getMyInfo(USER1);

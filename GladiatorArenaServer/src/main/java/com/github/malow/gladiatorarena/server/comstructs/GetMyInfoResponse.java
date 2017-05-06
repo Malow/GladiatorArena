@@ -1,7 +1,7 @@
 package com.github.malow.gladiatorarena.server.comstructs;
 
 import com.github.malow.accountserver.comstructs.Response;
-import com.github.malow.gladiatorarena.server.database.Player;
+import com.github.malow.gladiatorarena.server.database.User;
 
 public class GetMyInfoResponse extends Response
 {
@@ -10,13 +10,13 @@ public class GetMyInfoResponse extends Response
   public Integer currentGameId;
   public boolean isSearchingForGame;
 
-  public GetMyInfoResponse(boolean result, Player player)
+  public GetMyInfoResponse(boolean result, User user)
   {
     super(result);
-    this.username = player.username;
-    this.rating = player.rating;
-    this.currentGameId = player.currentGameId;
-    this.isSearchingForGame = player.isSearchingForGame;
+    this.username = user.username;
+    this.rating = user.rating;
+    this.currentGameId = user.currentGameId;
+    this.isSearchingForGame = user.isSearchingForGame;
   }
 
   public GetMyInfoResponse(boolean result, String username, Integer rating, Integer currentGameId, boolean isSearchingForGame)

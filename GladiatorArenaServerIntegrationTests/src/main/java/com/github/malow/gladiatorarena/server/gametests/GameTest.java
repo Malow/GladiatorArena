@@ -1,21 +1,25 @@
 package com.github.malow.gladiatorarena.server.gametests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
+import com.github.malow.gladiatorarena.gamecore.message.Action;
+import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
+import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
+import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
 import com.github.malow.gladiatorarena.server.Config;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture;
 import com.github.malow.gladiatorarena.server.ServerConnection;
 import com.github.malow.gladiatorarena.server.comstructs.GetMyInfoResponse;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.MethodNames;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage.GameMessageMethod;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.JoinGameRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage.SocketMethod;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.ActionRequest;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.GameFinishedUpdate;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.GameStateUpdate;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.specific.JoinGameRequest;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.network.NetworkChannel;
@@ -26,8 +30,8 @@ public class GameTest extends GladiatorArenaServerTestFixture
   @Test
   public void test() throws Exception
   {
-    ServerConnection.createPlayer(USER1);
-    ServerConnection.createPlayer(USER2);
+    ServerConnection.createUser(USER1);
+    ServerConnection.createUser(USER2);
     ServerConnection.queueMatchmaking(USER1);
     ServerConnection.queueMatchmaking(USER2);
 
@@ -84,35 +88,30 @@ public class GameTest extends GladiatorArenaServerTestFixture
       NetworkPacket packet = (NetworkPacket) this.waitEvent();
       SocketResponse response = GsonSingleton.fromJson(packet.getMessage(), SocketResponse.class);
       assertEquals(true, response.result);
-      assertEquals(MethodNames.JOIN_GAME_REQUEST, response.method);
+      assertEquals(SocketMethod.JOIN_GAME_REQUEST, response.method);
 
-      this.server.sendData(GsonSingleton.toJson(new SocketMessage(MethodNames.READY)));
+      this.server.sendData(GsonSingleton.toJson(new SocketMessage(SocketMethod.READY)));
       packet = (NetworkPacket) this.waitEvent();
       response = GsonSingleton.fromJson(packet.getMessage(), SocketResponse.class);
       assertEquals(true, response.result);
-      assertEquals(MethodNames.READY, response.method);
+      assertEquals(SocketMethod.READY, response.method);
 
       packet = (NetworkPacket) this.waitEvent();
-      GameStateUpdate updateRequest = GsonSingleton.fromJson(packet.getMessage(), GameStateUpdate.class);
-      assertEquals(MethodNames.GAME_STATE_UPDATE, updateRequest.method);
-      this.server.sendData(GsonSingleton.toJson(new SocketResponse(MethodNames.GAME_STATE_UPDATE, true)));
+      GameMessage gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
+      assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
+      assertEquals(GameMessageMethod.GAME_STATE_UPDATE, gameMessage.gameMethod);
+      GameStateUpdate updateRequest = GsonSingleton.fromJson(gameMessage.messageJson, GameStateUpdate.class);
+      assertNotNull(updateRequest);
 
-      this.server.sendData(GsonSingleton.toJson(new SocketMessage(MethodNames.READY)));
-      packet = (NetworkPacket) this.waitEvent();
-      response = GsonSingleton.fromJson(packet.getMessage(), SocketResponse.class);
-      assertEquals(true, response.result);
-      assertEquals(MethodNames.READY, response.method);
-
-      this.server.sendData(GsonSingleton.toJson(new ActionRequest()));
-      packet = (NetworkPacket) this.waitEvent();
-      response = GsonSingleton.fromJson(packet.getMessage(), SocketResponse.class);
-      assertEquals(true, response.result);
+      this.server.sendData(GsonSingleton.toJson(new GameMessage(GameMessageMethod.ACTION, GsonSingleton.toJson(new Action()))));
+      this.server.sendData(GsonSingleton.toJson(new GameMessage(GameMessageMethod.FINISH_TURN, GsonSingleton.toJson(new FinishTurn()))));
 
       packet = (NetworkPacket) this.waitEvent();
-      GameFinishedUpdate finishRequest = GsonSingleton.fromJson(packet.getMessage(), GameFinishedUpdate.class);
-      assertEquals(MethodNames.GAME_FINISHED_UPDATE, finishRequest.method);
-      assertEquals(USER1.username, finishRequest.winnerUsername);
-      this.server.sendData(GsonSingleton.toJson(new SocketResponse(MethodNames.GAME_FINISHED_UPDATE, true)));
+      gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
+      assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
+      assertEquals(GameMessageMethod.GAME_FINISHED_UPDATE, gameMessage.gameMethod);
+      GameFinishedUpdate gameFinishedUpdate = GsonSingleton.fromJson(gameMessage.messageJson, GameFinishedUpdate.class);
+      assertEquals(USER1.username, gameFinishedUpdate.winner);
     }
 
     @Override

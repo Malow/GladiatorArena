@@ -5,60 +5,60 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
-import com.github.malow.gladiatorarena.server.database.Player;
+import com.github.malow.gladiatorarena.server.database.User;
 import com.github.malow.malowlib.MaloWLogger;
 
 public class MatchmakerHandler
 {
-  private static List<Player> playerQueue = new ArrayList<Player>();
+  private static List<User> userQueue = new ArrayList<User>();
 
-  public static void queue(Player player)
+  public static void queue(User user)
   {
-    synchronized (playerQueue)
+    synchronized (userQueue)
     {
-      if (playerQueue.contains(player))
+      if (userQueue.contains(user))
       {
-        MaloWLogger.error("Player tried to queue but was already in queue: " + player.username, new Exception());
+        MaloWLogger.error("User tried to queue but was already in queue: " + user.username, new Exception());
         return;
       }
 
-      Player other = findOpponent(player);
+      User other = findOpponent(user);
       if (other != null)
       {
-        playerQueue.remove(other);
-        MatchHandlerSingleton.get().createNewGame(Arrays.asList(player, other));
+        userQueue.remove(other);
+        MatchHandlerSingleton.get().createNewGame(Arrays.asList(user, other));
       }
       else
       {
-        playerQueue.add(player);
+        userQueue.add(user);
       }
     }
   }
 
-  public static void unqueue(Player player)
+  public static void unqueue(User user)
   {
-    synchronized (playerQueue)
+    synchronized (userQueue)
     {
-      if (playerQueue.contains(player))
+      if (userQueue.contains(user))
       {
-        playerQueue.remove(player);
+        userQueue.remove(user);
       }
     }
   }
 
   public static void clearQueue()
   {
-    synchronized (playerQueue)
+    synchronized (userQueue)
     {
-      playerQueue.clear();
+      userQueue.clear();
     }
   }
 
-  private static Player findOpponent(Player player)
+  private static User findOpponent(User user)
   {
-    for (Player other : playerQueue)
+    for (User other : userQueue)
     {
-      if (Math.abs(other.rating - player.rating) <= GladiatorArenaServerConfig.MATCHMAKING_MAX_RATING_DIFFERENCE)
+      if (Math.abs(other.rating - user.rating) <= GladiatorArenaServerConfig.MATCHMAKING_MAX_RATING_DIFFERENCE)
       {
         return other;
       }

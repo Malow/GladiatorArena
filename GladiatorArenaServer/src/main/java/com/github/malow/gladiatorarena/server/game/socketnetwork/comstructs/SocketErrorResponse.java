@@ -4,7 +4,7 @@ public class SocketErrorResponse extends SocketResponse
 {
   public String error;
 
-  public SocketErrorResponse(String method, boolean result, String error)
+  public SocketErrorResponse(SocketMethod method, boolean result, String error)
   {
     super(method, result);
     this.error = error;

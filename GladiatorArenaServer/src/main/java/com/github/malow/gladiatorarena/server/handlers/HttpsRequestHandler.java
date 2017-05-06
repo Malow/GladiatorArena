@@ -4,10 +4,10 @@ import com.github.malow.accountserver.comstructs.AuthorizedRequest;
 import com.github.malow.accountserver.comstructs.ErrorResponse;
 import com.github.malow.accountserver.comstructs.Response;
 import com.github.malow.gladiatorarena.server.ErrorMessages;
-import com.github.malow.gladiatorarena.server.comstructs.CreatePlayerRequest;
+import com.github.malow.gladiatorarena.server.comstructs.CreateUserRequest;
 import com.github.malow.gladiatorarena.server.comstructs.GetMyInfoResponse;
-import com.github.malow.gladiatorarena.server.database.Player;
-import com.github.malow.gladiatorarena.server.database.PlayerAccessorSingleton;
+import com.github.malow.gladiatorarena.server.database.User;
+import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.database.DatabaseExceptions.UnexpectedException;
 import com.github.malow.malowlib.database.DatabaseExceptions.UniqueException;
@@ -15,14 +15,14 @@ import com.github.malow.malowlib.database.DatabaseExceptions.ZeroRowsReturnedExc
 
 public class HttpsRequestHandler
 {
-  public static Response createPlayer(CreatePlayerRequest req)
+  public static Response createUser(CreateUserRequest req)
   {
     try
     {
-      Player player = new Player();
-      player.accountId = req.accountId;
-      player.username = req.username;
-      PlayerAccessorSingleton.get().create(player);
+      User user = new User();
+      user.accountId = req.accountId;
+      user.username = req.username;
+      UserAccessorSingleton.get().create(user);
       return new Response(true);
     }
     catch (UniqueException e)
@@ -33,12 +33,12 @@ public class HttpsRequestHandler
       }
       else
       {
-        return new ErrorResponse(false, ErrorMessages.ACCOUNT_ALREADY_HAS_PLAYER);
+        return new ErrorResponse(false, ErrorMessages.ACCOUNT_ALREADY_HAS_USER);
       }
     }
     catch (Exception e)
     {
-      MaloWLogger.error("Unexpected error when trying to createPlayer", e);
+      MaloWLogger.error("Unexpected error when trying to createUser", e);
       return new ErrorResponse(false, "Unexpected error");
     }
   }
@@ -47,12 +47,12 @@ public class HttpsRequestHandler
   {
     try
     {
-      Player player = PlayerAccessorSingleton.get().readByAccountId(req.accountId);
-      return new GetMyInfoResponse(true, player);
+      User user = UserAccessorSingleton.get().readByAccountId(req.accountId);
+      return new GetMyInfoResponse(true, user);
     }
     catch (ZeroRowsReturnedException e)
     {
-      return new ErrorResponse(false, ErrorMessages.NO_PLAYER_FOUND);
+      return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
     {
@@ -65,26 +65,26 @@ public class HttpsRequestHandler
   {
     try
     {
-      //NamedMutex example, Lock for "player:#{accountId}", otherwise multiple queues can be done
-      Player player = PlayerAccessorSingleton.get().readByAccountId(req.accountId);
-      if (player.currentGameId != null)
+      //NamedMutex example, Lock for "user:#{accountId}", otherwise multiple queues can be done
+      User user = UserAccessorSingleton.get().readByAccountId(req.accountId);
+      if (user.currentGameId != null)
       {
         return new ErrorResponse(false, ErrorMessages.ALREADY_HAVE_A_MATCH);
       }
-      if (player.isSearchingForGame)
+      if (user.isSearchingForGame)
       {
         return new ErrorResponse(false, ErrorMessages.ALREADY_IN_QUEUE);
       }
 
-      player.isSearchingForGame = true;
-      PlayerAccessorSingleton.get().updateCacheOnly(player);
+      user.isSearchingForGame = true;
+      UserAccessorSingleton.get().updateCacheOnly(user);
       //NamedMutex example, unlock. Also unlock before the returns above tho
-      MatchmakerHandler.queue(player);
+      MatchmakerHandler.queue(user);
       return new Response(true);
     }
     catch (ZeroRowsReturnedException e)
     {
-      return new ErrorResponse(false, ErrorMessages.NO_PLAYER_FOUND);
+      return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
     {
@@ -97,26 +97,26 @@ public class HttpsRequestHandler
   {
     try
     {
-      //NamedMutex example, Lock for "player:#{accountId}", otherwise multiple queues can be done
-      Player player = PlayerAccessorSingleton.get().readByAccountId(req.accountId);
-      if (player.currentGameId != null)
+      //NamedMutex example, Lock for "user:#{accountId}", otherwise multiple queues can be done
+      User user = UserAccessorSingleton.get().readByAccountId(req.accountId);
+      if (user.currentGameId != null)
       {
         return new ErrorResponse(false, ErrorMessages.ALREADY_HAVE_A_MATCH);
       }
-      if (!player.isSearchingForGame)
+      if (!user.isSearchingForGame)
       {
         return new ErrorResponse(false, ErrorMessages.NOT_IN_QUEUE);
       }
 
-      player.isSearchingForGame = false;
-      PlayerAccessorSingleton.get().updateCacheOnly(player);
+      user.isSearchingForGame = false;
+      UserAccessorSingleton.get().updateCacheOnly(user);
       //NamedMutex example, unlock. Also unlock before the returns above tho
-      MatchmakerHandler.unqueue(player);
+      MatchmakerHandler.unqueue(user);
       return new Response(true);
     }
     catch (ZeroRowsReturnedException e)
     {
-      return new ErrorResponse(false, ErrorMessages.NO_PLAYER_FOUND);
+      return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
     {

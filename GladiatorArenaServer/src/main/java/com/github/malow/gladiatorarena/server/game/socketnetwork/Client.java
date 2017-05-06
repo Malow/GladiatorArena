@@ -7,11 +7,7 @@ import com.github.malow.malowlib.network.NetworkChannel;
 
 public class Client extends NetworkChannel
 {
-  public boolean ready = false;
-  public boolean disconnected = false;
-
-  public String username;
-  public Integer playerId;
+  public Integer userId;
 
   public Client(Socket socket)
   {
