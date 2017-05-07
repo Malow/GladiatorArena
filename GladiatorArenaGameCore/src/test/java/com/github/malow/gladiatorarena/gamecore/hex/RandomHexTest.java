@@ -67,4 +67,26 @@ public class RandomHexTest
     List<Hex> ns = m.getNeighborsForHex(from);
     ns.stream().forEach(n -> System.out.println(n.toString()));
   }
+
+  @Test
+  public void printCoords()
+  {
+    HexagonMap m = new HexagonMap(10, 10);
+    System.out.println(m.getAsGraphicalStringWithPositions());
+  }
+
+  @Test
+  public void getPathTest()
+  {
+    int sizeX = 50;
+    int sizeY = 50;
+    HexagonMap m = new HexagonMap(sizeX, sizeY);
+    Hex from = new Hex(0, 0);
+    Hex to = new Hex(5, 5);
+    List<Hex> path = m.aStar(from, to);
+    for (Hex hex : path)
+    {
+      System.out.println("path.add(new Position(" + hex.x + ", " + hex.y + "));");
+    }
+  }
 }

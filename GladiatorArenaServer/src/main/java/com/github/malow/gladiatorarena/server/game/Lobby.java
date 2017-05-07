@@ -7,12 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.github.malow.gladiatorarena.gamecore.GameInstance;
+import com.github.malow.gladiatorarena.gamecore.Game;
 import com.github.malow.gladiatorarena.gamecore.GameResult;
-import com.github.malow.gladiatorarena.gamecore.message.Action;
-import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
-import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
-import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
 import com.github.malow.gladiatorarena.server.database.User;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
@@ -32,7 +28,7 @@ public class Lobby extends MaloWProcess
   private List<NetworkPlayer> players = new ArrayList<>();
   private LocalDateTime created;
   private LocalDateTime ended;
-  private GameInstance game;
+  private Game game;
   private GameStatus status = GameStatus.NOT_STARTED;
   private long lastGameUpdate = 0;
   //private long lastPing = 0;
@@ -42,7 +38,7 @@ public class Lobby extends MaloWProcess
     this.id = id;
     this.users = expectedUsers;
     this.created = LocalDateTime.now();
-    this.game = new GameInstance();
+    this.game = new Game();
   }
 
   public boolean userConnected(NetworkPlayer player)
@@ -182,34 +178,16 @@ public class Lobby extends MaloWProcess
         from.client.sendData(GsonSingleton.toJson(new SocketResponse(message.method, true)));
         break;
       case GAME_MESSAGE:
-        this.handleGameMessage(GsonSingleton.fromJson(packet.message, GameMessage.class), from);
+        GameMessage gameMessage = GsonSingleton.fromJson(packet.message, GameMessage.class);
+        boolean result = this.game.handleMessage(gameMessage.getMessage(), from.username);
+        if (!result)
+        {
+          MaloWLogger.error("Returned false from game.handleMessage: " + gameMessage.method, new Exception());
+        }
         break;
       default:
         MaloWLogger.error("Recieved a GameNetworkPacket with unkown method: " + message.method, new Exception());
     }
-  }
-
-  private void handleGameMessage(GameMessage gameMessage, NetworkPlayer from)
-  {
-    switch (gameMessage.gameMethod)
-    {
-      case ACTION:
-        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, Action.class), from.username);
-        break;
-      case FINISH_TURN:
-        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, FinishTurn.class), from.username);
-        break;
-      case GAME_FINISHED_UPDATE:
-        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, GameFinishedUpdate.class), from.username);
-        break;
-      case GAME_STATE_UPDATE:
-        this.game.handleMessage(GsonSingleton.fromJson(gameMessage.messageJson, GameStateUpdate.class), from.username);
-        break;
-      default:
-        MaloWLogger.error("Recieved a GameMessage with unkown method: " + gameMessage.gameMethod, new Exception());
-        break;
-    }
-
   }
 
   private GameNetworkPacket getGameNetworkPacket(ProcessEvent ev)

@@ -1,6 +1,7 @@
 package com.github.malow.gladiatorarena.gamecore.hex;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +111,41 @@ public class HexagonMap
     return s;
   }
 
+  public String getAsGraphicalStringWithPositions()
+  {
+    String s = "";
+    for (int u = 0; u < this.sizeY; u++)
+    {
+      for (int i = 0; i < this.sizeX; i++)
+      {
+        if (i % 2 == 0)
+        {
+          String position = new Hex(i, u).toString();
+          s += position + " ";
+        }
+        else
+        {
+          s += "   ";
+        }
+      }
+      s += "\n";
+      for (int i = 0; i < this.sizeX; i++)
+      {
+        if (i % 2 == 1)
+        {
+          String position = new Hex(i, u).toString();
+          s += position + " ";
+        }
+        else
+        {
+          s += "   ";
+        }
+      }
+      s += "\n";
+    }
+    return s;
+  }
+
   public List<Hex> aStar(Hex start, Hex goal)
   {
     List<Hex> closedSet = new ArrayList<Hex>();
@@ -137,7 +173,7 @@ public class HexagonMap
         {
           continue;
         }
-        double tentative_gScore = gScore.get(current) + neighbor.getMovementCost();
+        double tentative_gScore = gScore.get(current) + neighbor.movementCost;
         if (!openSet.contains(neighbor))
         {
           openSet.add(neighbor);
@@ -157,43 +193,52 @@ public class HexagonMap
   private List<Hex> reconstruct_path(Map<Hex, Hex> cameFrom, Hex current)
   {
     List<Hex> totalPath = new ArrayList<Hex>();
-    while (cameFrom.containsKey(current))
+    boolean run = cameFrom.containsKey(current);
+    while (run)
     {
       current = cameFrom.get(current);
-      totalPath.add(current);
+      if (cameFrom.containsKey(current))
+      {
+        totalPath.add(current);
+      }
+      else
+      {
+        run = false;
+      }
     }
+    Collections.reverse(totalPath);
     return totalPath;
   }
 
   public List<Hex> getNeighborsForHex(Hex hex)
   {
     List<Hex> neighbors = new ArrayList<Hex>();
-    List<Coords> coords = this.getCoordsForNeighbors(hex);
-    for (Coords coord : coords)
+    List<Position> coords = this.getCoordsForNeighbors(hex);
+    for (Position coord : coords)
     {
       neighbors.add(this.map[coord.x][coord.y]);
     }
     return neighbors;
   }
 
-  private List<Coords> getCoordsForNeighbors(Coords coord)
+  private List<Position> getCoordsForNeighbors(Position coord)
   {
-    List<Coords> neighbors = new ArrayList<Coords>();
-    neighbors.add(new Coords(coord.x, coord.y + 1));
-    neighbors.add(new Coords(coord.x, coord.y - 1));
+    List<Position> neighbors = new ArrayList<Position>();
+    neighbors.add(new Position(coord.x, coord.y + 1));
+    neighbors.add(new Position(coord.x, coord.y - 1));
     if (coord.isLowerX())
     {
-      neighbors.add(new Coords(coord.x - 1, coord.y));
-      neighbors.add(new Coords(coord.x - 1, coord.y + 1));
-      neighbors.add(new Coords(coord.x + 1, coord.y));
-      neighbors.add(new Coords(coord.x + 1, coord.y + 1));
+      neighbors.add(new Position(coord.x - 1, coord.y));
+      neighbors.add(new Position(coord.x - 1, coord.y + 1));
+      neighbors.add(new Position(coord.x + 1, coord.y));
+      neighbors.add(new Position(coord.x + 1, coord.y + 1));
     }
     else
     {
-      neighbors.add(new Coords(coord.x - 1, coord.y - 1));
-      neighbors.add(new Coords(coord.x - 1, coord.y));
-      neighbors.add(new Coords(coord.x + 1, coord.y - 1));
-      neighbors.add(new Coords(coord.x + 1, coord.y));
+      neighbors.add(new Position(coord.x - 1, coord.y - 1));
+      neighbors.add(new Position(coord.x - 1, coord.y));
+      neighbors.add(new Position(coord.x + 1, coord.y - 1));
+      neighbors.add(new Position(coord.x + 1, coord.y));
     }
     return neighbors.stream().filter(n ->
     {

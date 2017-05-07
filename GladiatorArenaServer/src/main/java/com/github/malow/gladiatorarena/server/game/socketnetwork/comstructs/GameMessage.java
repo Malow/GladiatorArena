@@ -1,22 +1,75 @@
 package com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs;
 
+import com.github.malow.gladiatorarena.gamecore.message.AttackAction;
+import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
+import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
+import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
+import com.github.malow.gladiatorarena.gamecore.message.Message;
+import com.github.malow.gladiatorarena.gamecore.message.MoveAction;
+import com.github.malow.malowlib.GsonSingleton;
+import com.github.malow.malowlib.MaloWLogger;
+
 public class GameMessage extends SocketMessage
 {
   public static enum GameMessageMethod
   {
-    ACTION,
+    MOVE_ACTION,
+    ATTACK_ACTION,
     FINISH_TURN,
     GAME_STATE_UPDATE,
     GAME_FINISHED_UPDATE
   }
 
-  public String messageJson;
-  public GameMessageMethod gameMethod;
+  private String messageJson;
+  private GameMessageMethod gameMethod;
 
-  public GameMessage(GameMessageMethod method, String messageJson)
+  public GameMessage(Message message)
   {
     super(SocketMethod.GAME_MESSAGE);
-    this.gameMethod = method;
-    this.messageJson = messageJson;
+    if (message instanceof MoveAction)
+    {
+      this.gameMethod = GameMessageMethod.MOVE_ACTION;
+    }
+    else if (message instanceof AttackAction)
+    {
+      this.gameMethod = GameMessageMethod.ATTACK_ACTION;
+    }
+    else if (message instanceof FinishTurn)
+    {
+      this.gameMethod = GameMessageMethod.FINISH_TURN;
+    }
+    else if (message instanceof GameFinishedUpdate)
+    {
+      this.gameMethod = GameMessageMethod.GAME_FINISHED_UPDATE;
+    }
+    else if (message instanceof GameStateUpdate)
+    {
+      this.gameMethod = GameMessageMethod.GAME_STATE_UPDATE;
+    }
+    else
+    {
+      MaloWLogger.error("Unknown type of message: " + message.getClass().getSimpleName(), new Exception());
+    }
+    this.messageJson = GsonSingleton.toJson(message);
+  }
+
+  public Message getMessage()
+  {
+    switch (this.gameMethod)
+    {
+      case MOVE_ACTION:
+        return GsonSingleton.fromJson(this.messageJson, MoveAction.class);
+      case ATTACK_ACTION:
+        return GsonSingleton.fromJson(this.messageJson, AttackAction.class);
+      case FINISH_TURN:
+        return GsonSingleton.fromJson(this.messageJson, FinishTurn.class);
+      case GAME_FINISHED_UPDATE:
+        return GsonSingleton.fromJson(this.messageJson, GameFinishedUpdate.class);
+      case GAME_STATE_UPDATE:
+        return GsonSingleton.fromJson(this.messageJson, GameStateUpdate.class);
+      default:
+        MaloWLogger.error("Recieved a GameMessage with unkown method: " + this.gameMethod, new Exception());
+        return null;
+    }
   }
 }

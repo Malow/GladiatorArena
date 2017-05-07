@@ -1,5 +1,7 @@
 package com.github.malow.gladiatorarena.gamecore;
 
+import com.github.malow.gladiatorarena.gamecore.message.Message;
+
 public abstract class Player
 {
   public String username;
@@ -10,7 +12,5 @@ public abstract class Player
     this.username = username;
   }
 
-  public abstract void gameStateUpdate();
-
-  public abstract void gameFinishedUpdate(String winner);
+  public abstract void handleMessage(Message message);
 }

@@ -1,21 +1,26 @@
 package com.github.malow.gladiatorarena.server.gametests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
-import com.github.malow.gladiatorarena.gamecore.message.Action;
-import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
+import com.github.malow.gladiatorarena.gamecore.hex.Position;
+import com.github.malow.gladiatorarena.gamecore.message.AttackAction;
 import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
 import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
+import com.github.malow.gladiatorarena.gamecore.message.MoveAction;
+import com.github.malow.gladiatorarena.gamecore.unit.Unit;
 import com.github.malow.gladiatorarena.server.Config;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture;
 import com.github.malow.gladiatorarena.server.ServerConnection;
 import com.github.malow.gladiatorarena.server.comstructs.GetMyInfoResponse;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage.GameMessageMethod;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.JoinGameRequest;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage.SocketMethod;
@@ -70,11 +75,13 @@ public class GameTest extends GladiatorArenaServerTestFixture
     private String authToken;
     private String email;
     private NetworkChannel server;
+    private String username;
 
     public GameSocketClient(TestUser user, Integer gameId)
     {
       this.email = user.email;
       this.authToken = user.authToken;
+      this.username = user.username;
       this.gameId = gameId;
       this.server = new NetworkChannel(Config.GAME_SOCKET_SERVER_IP, Config.GAME_SOCKET_SERVER_PORT);
       this.server.setNotifier(this);
@@ -99,18 +106,46 @@ public class GameTest extends GladiatorArenaServerTestFixture
       packet = (NetworkPacket) this.waitEvent();
       GameMessage gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
       assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
-      assertEquals(GameMessageMethod.GAME_STATE_UPDATE, gameMessage.gameMethod);
-      GameStateUpdate updateRequest = GsonSingleton.fromJson(gameMessage.messageJson, GameStateUpdate.class);
-      assertNotNull(updateRequest);
+      GameStateUpdate gameStateUpdate = (GameStateUpdate) gameMessage.getMessage();
+      assertNotNull(gameStateUpdate);
+      List<Unit> units = gameStateUpdate.units;
+      Unit myUnit = units.stream().filter(u -> u.owner.equals(this.username)).findAny().get();
 
-      this.server.sendData(GsonSingleton.toJson(new GameMessage(GameMessageMethod.ACTION, GsonSingleton.toJson(new Action()))));
-      this.server.sendData(GsonSingleton.toJson(new GameMessage(GameMessageMethod.FINISH_TURN, GsonSingleton.toJson(new FinishTurn()))));
+      List<Position> movePath = new ArrayList<>();
+      movePath.add(new Position(1, 0));
+      movePath.add(new Position(2, 1));
+      movePath.add(new Position(2, 2));
+      movePath.add(new Position(3, 2));
+      movePath.add(new Position(4, 3));
+      movePath.add(new Position(4, 4));
+      movePath.add(new Position(4, 5));
+
+      if (myUnit.position.equals(new Position(0, 0)))
+      {
+        this.server.sendData(GsonSingleton.toJson(new GameMessage(new MoveAction(myUnit.unitId, movePath))));
+        this.server.sendData(GsonSingleton.toJson(new GameMessage(new AttackAction(myUnit.unitId, new Position(5, 5)))));
+      }
+      else
+      {
+        packet = (NetworkPacket) this.waitEvent();
+        gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
+        assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
+        MoveAction moveAction = (MoveAction) gameMessage.getMessage();
+        assertNotEquals(myUnit.unitId, moveAction.unitId);
+        assertEquals(moveAction.path, movePath);
+
+        packet = (NetworkPacket) this.waitEvent();
+        gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
+        assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
+        AttackAction attackAction = (AttackAction) gameMessage.getMessage();
+        assertNotEquals(myUnit.unitId, attackAction.unitId);
+        assertEquals(attackAction.target, myUnit.position);
+      }
 
       packet = (NetworkPacket) this.waitEvent();
       gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
       assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
-      assertEquals(GameMessageMethod.GAME_FINISHED_UPDATE, gameMessage.gameMethod);
-      GameFinishedUpdate gameFinishedUpdate = GsonSingleton.fromJson(gameMessage.messageJson, GameFinishedUpdate.class);
+      GameFinishedUpdate gameFinishedUpdate = (GameFinishedUpdate) gameMessage.getMessage();
       assertEquals(USER1.username, gameFinishedUpdate.winner);
     }
 

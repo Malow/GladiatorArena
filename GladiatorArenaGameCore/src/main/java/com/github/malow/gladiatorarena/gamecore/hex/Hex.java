@@ -1,18 +1,12 @@
 package com.github.malow.gladiatorarena.gamecore.hex;
 
-public class Hex extends Coords
+public class Hex extends Position
 {
-
-  private Double movementCost;
+  public Double movementCost;
 
   public Hex(int x, int y)
   {
     super(x, y);
     this.movementCost = 1.0;
-  }
-
-  public Double getMovementCost()
-  {
-    return this.movementCost;
   }
 }
