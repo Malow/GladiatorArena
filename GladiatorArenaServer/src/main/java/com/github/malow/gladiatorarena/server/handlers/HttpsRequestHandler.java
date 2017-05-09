@@ -79,7 +79,7 @@ public class HttpsRequestHandler
       user.isSearchingForGame = true;
       UserAccessorSingleton.get().updateCacheOnly(user);
       //NamedMutex example, unlock. Also unlock before the returns above tho
-      MatchmakerHandler.queue(user);
+      MatchmakingEngineSingleton.get().enqueue(user.getId(), user.rating);
       return new Response(true);
     }
     catch (ZeroRowsReturnedException e)
@@ -111,7 +111,7 @@ public class HttpsRequestHandler
       user.isSearchingForGame = false;
       UserAccessorSingleton.get().updateCacheOnly(user);
       //NamedMutex example, unlock. Also unlock before the returns above tho
-      MatchmakerHandler.unqueue(user);
+      MatchmakingEngineSingleton.get().dequeue(user.getId());
       return new Response(true);
     }
     catch (ZeroRowsReturnedException e)

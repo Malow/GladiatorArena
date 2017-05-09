@@ -6,7 +6,7 @@ import com.github.malow.gladiatorarena.server.database.User;
 public class GetMyInfoResponse extends Response
 {
   public String username;
-  public Integer rating;
+  public Double rating;
   public Integer currentGameId;
   public boolean isSearchingForGame;
 
@@ -19,7 +19,7 @@ public class GetMyInfoResponse extends Response
     this.isSearchingForGame = user.isSearchingForGame;
   }
 
-  public GetMyInfoResponse(boolean result, String username, Integer rating, Integer currentGameId, boolean isSearchingForGame)
+  public GetMyInfoResponse(boolean result, String username, Double rating, Integer currentGameId, boolean isSearchingForGame)
   {
     super(result);
     this.username = username;

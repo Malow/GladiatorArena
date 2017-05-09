@@ -40,7 +40,7 @@ public class UnqueueMatchmakingTests extends GladiatorArenaServerTestFixture
     ServerConnection.createUser(USER2);
     ServerConnection.queueMatchmaking(USER1);
     ServerConnection.queueMatchmaking(USER2);
-
+    ServerConnection.waitForEmptyMatchmakingEngine();
     String jsonResponse = ServerConnection.unqueueMatchmaking(USER1);
     ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
     assertEquals(false, response.result);

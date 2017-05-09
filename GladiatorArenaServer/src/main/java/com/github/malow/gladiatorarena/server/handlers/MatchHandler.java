@@ -1,6 +1,7 @@
 package com.github.malow.gladiatorarena.server.handlers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,6 +26,8 @@ import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.malowprocess.ProcessEvent;
+import com.github.malow.malowlib.matchmakingengine.MatchFoundEvent;
+import com.github.malow.malowlib.matchmakingengine.MatchmakingResult;
 import com.github.malow.malowlib.network.NetworkChannel;
 
 public class MatchHandler extends MaloWProcess
@@ -37,7 +40,7 @@ public class MatchHandler extends MaloWProcess
   {
   }
 
-  public void createNewGame(List<User> expectedUsers)
+  private void createNewGame(List<User> expectedUsers)
   {
     try
     {
@@ -84,10 +87,10 @@ public class MatchHandler extends MaloWProcess
         reference.matchId = matchId;
         reference.isWinner = matchResult.users.get(u);
         reference.ratingBefore = user.rating;
-        reference.ratingChange = reference.isWinner ? 100 : -100;
+        reference.ratingChange = reference.isWinner ? 100.0 : -100.0;
         reference.username = user.username;
         references.add(reference);
-        user.rating += reference.isWinner ? 100 : -100;
+        user.rating += reference.isWinner ? 100.0 : -100.0;
         user.currentGameId = null;
         UserAccessorSingleton.get().update(user);
         MatchReferenceAccessorSingleton.get().create(reference);
@@ -109,7 +112,22 @@ public class MatchHandler extends MaloWProcess
     while (this.stayAlive)
     {
       ProcessEvent ev = this.waitEvent();
-      if (ev instanceof GameNetworkPacket)
+      if (ev instanceof MatchFoundEvent)
+      {
+        MatchFoundEvent event = (MatchFoundEvent) ev;
+        MatchmakingResult matchMakingResult = event.matchmakingResult;
+        try
+        {
+          User user1 = UserAccessorSingleton.get().read(matchMakingResult.player1.playerId);
+          User user2 = UserAccessorSingleton.get().read(matchMakingResult.player2.playerId);
+          this.createNewGame(Arrays.asList(user1, user2));
+        }
+        catch (Exception e)
+        {
+          MaloWLogger.error("Critical error, unable to find User for match", e);
+        }
+      }
+      else if (ev instanceof GameNetworkPacket)
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
         JoinGameRequest req = GsonSingleton.fromJson(packet.message, JoinGameRequest.class);

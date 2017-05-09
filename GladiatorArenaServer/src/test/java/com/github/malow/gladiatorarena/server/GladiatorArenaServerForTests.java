@@ -21,12 +21,12 @@ public class GladiatorArenaServerForTests
     httpsServer.start();
 
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
-    gladConfig.allowClearCacheOperation = true;
+    gladConfig.allowTestOperations = true;
 
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
         "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
     accountServerConfig.enableEmailSending = false;
-    accountServerConfig.allowClearCacheOperation = true;
+    accountServerConfig.allowTestOperations = true;
 
     GladiatorArenaServer.start(gladConfig, accountServerConfig, httpsServer);
 

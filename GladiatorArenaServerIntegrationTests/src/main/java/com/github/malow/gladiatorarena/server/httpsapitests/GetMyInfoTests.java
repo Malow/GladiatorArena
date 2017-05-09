@@ -24,7 +24,7 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
     assertEquals(true, response.result);
     assertNull(response.currentGameId);
     assertEquals(false, response.isSearchingForGame);
-    assertEquals(Integer.valueOf(0), response.rating);
+    assertEquals(Double.valueOf(0.0), response.rating);
     assertEquals(USER1.username, response.username);
   }
 
@@ -57,23 +57,24 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
     assertEquals(true, response.result);
     assertNull(response.currentGameId);
     assertEquals(true, response.isSearchingForGame);
-    assertEquals(Integer.valueOf(0), response.rating);
+    assertEquals(Double.valueOf(0.0), response.rating);
     assertEquals(USER1.username, response.username);
   }
 
   @Test
-  public void testGetMyInfoReutnsCorrectDataAfterFindingGame() throws Exception
+  public void testGetMyInfoReturnsCorrectDataAfterFindingGame() throws Exception
   {
     ServerConnection.createUser(USER1);
     ServerConnection.createUser(USER2);
     ServerConnection.queueMatchmaking(USER1);
     ServerConnection.queueMatchmaking(USER2);
+    ServerConnection.waitForEmptyMatchmakingEngine();
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
     assertNotNull(response.currentGameId);
     assertEquals(false, response.isSearchingForGame);
-    assertEquals(Integer.valueOf(0), response.rating);
+    assertEquals(Double.valueOf(0.0), response.rating);
     assertEquals(USER1.username, response.username);
   }
 }

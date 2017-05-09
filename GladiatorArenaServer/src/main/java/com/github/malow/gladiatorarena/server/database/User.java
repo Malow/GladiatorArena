@@ -10,7 +10,7 @@ public class User extends DatabaseTableEntity
   public Integer accountId;
   @Unique
   public String username;
-  public Integer rating = 0;
+  public Double rating = 0.0;
 
   // Only cached in memory
   @NotPersisted

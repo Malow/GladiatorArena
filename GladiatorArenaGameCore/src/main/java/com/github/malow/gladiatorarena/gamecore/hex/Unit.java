@@ -4,7 +4,7 @@ public class Unit
 {
   public int unitId;
   public String owner;
-  protected Position position;
+  Position position;
   public double hitpoints = 10;
 
   public Unit(int unitId, String owner, Position position)

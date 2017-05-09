@@ -9,7 +9,7 @@ public class MatchReference extends DatabaseTableEntity
   @ForeignKey(target = Match.class)
   public Integer matchId;
   public Boolean isWinner;
-  public Integer ratingBefore;
-  public Integer ratingChange;
+  public Double ratingBefore;
+  public Double ratingChange;
   public String username;
 }

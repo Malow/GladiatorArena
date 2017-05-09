@@ -1,6 +1,7 @@
 package com.github.malow.gladiatorarena.server;
 
 import com.github.malow.accountserver.comstructs.AuthorizedRequest;
+import com.github.malow.accountserver.comstructs.Response;
 import com.github.malow.accountserver.comstructs.account.LoginRequest;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture.TestUser;
 import com.github.malow.gladiatorarena.server.comstructs.CreateUserRequest;
@@ -55,5 +56,15 @@ public class ServerConnection
   {
     httpsClient.sendMessage("/account/clearcache", "");
     httpsClient.sendMessage("/clearcache", "");
+  }
+
+  public static void waitForEmptyMatchmakingEngine() throws Exception
+  {
+    String json = httpsClient.sendMessage("/waitforemptymatchmakingengine", "");
+    Response response = GsonSingleton.fromJson(json, Response.class);
+    if (!response.result)
+    {
+      throw new RuntimeException("waitForEmptyMatchmakingEngine timed out");
+    }
   }
 }
