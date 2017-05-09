@@ -107,8 +107,8 @@ public class Game
     Hexagon originalHexagon = this.map.get(unit.getPosition());
     for (Position position : path)
     {
-      Hexagon nextHexagon = this.map.get(position);
       Hexagon currentHexagon = this.map.get(unit.getPosition());
+      Hexagon nextHexagon = this.map.get(position);
       if (HexagonHelper.isAdjacent(nextHexagon, currentHexagon) && !nextHexagon.isOccupied())
       {
         currentHexagon.clearTile();
@@ -120,6 +120,7 @@ public class Game
         boolean occupied = nextHexagon.isOccupied();
         MaloWLogger.error("Bad position, occupied: " + occupied + ", adjacent: " + adjacent + ". Current position: " + unit.getPosition().toString()
             + " - Next position: " + position.toString(), new Exception());
+        currentHexagon.clearTile();
         originalHexagon.setUnit(unit);
         return false;
       }
