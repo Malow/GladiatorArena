@@ -7,15 +7,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.github.malow.gladiatorarena.gamecore.hex.Hexagon;
+import com.github.malow.gladiatorarena.gamecore.hex.HexagonHelper;
 import com.github.malow.gladiatorarena.gamecore.hex.HexagonMap;
 import com.github.malow.gladiatorarena.gamecore.hex.Position;
+import com.github.malow.gladiatorarena.gamecore.hex.Unit;
 import com.github.malow.gladiatorarena.gamecore.message.AttackAction;
 import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
 import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
 import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
 import com.github.malow.gladiatorarena.gamecore.message.Message;
 import com.github.malow.gladiatorarena.gamecore.message.MoveAction;
-import com.github.malow.gladiatorarena.gamecore.unit.Unit;
 import com.github.malow.malowlib.MaloWLogger;
 
 public class Game
@@ -31,7 +33,10 @@ public class Game
     this.players.add(player);
     int unitId = this.nextUnitId++;
     Position position = new Position(unitId == 0 ? 0 : 5, unitId == 0 ? 0 : 5);
-    this.units.add(new Unit(unitId, player.username, position));
+    Hexagon hexagon = this.map.get(position);
+    Unit unit = new Unit(unitId, player.username, hexagon);
+    hexagon.setUnit(unit);
+    this.units.add(unit);
   }
 
   public void start()
@@ -99,20 +104,23 @@ public class Game
   {
     Unit unit = this.units.stream().filter(u -> u.unitId == action.unitId).findAny().get();
     List<Position> path = action.path;
-    Position originalPosition = unit.position;
+    Hexagon originalHexagon = this.map.get(unit.getPosition());
     for (Position position : path)
     {
-      if (position.isAdjacent(unit.position) && !this.isPositionTaken(position))
+      Hexagon nextHexagon = this.map.get(position);
+      Hexagon currentHexagon = this.map.get(unit.getPosition());
+      if (HexagonHelper.isAdjacent(nextHexagon, currentHexagon) && !nextHexagon.isOccupied())
       {
-        unit.position = position;
+        currentHexagon.clearTile();
+        nextHexagon.setUnit(unit);
       }
       else
       {
-        boolean adjacent = position.isAdjacent(unit.position);
-        boolean taken = this.isPositionTaken(position);
-        MaloWLogger.error("Bad position, taken: " + taken + ", adjacent: " + adjacent + ". Current position: " + unit.position.toString()
+        boolean adjacent = HexagonHelper.isAdjacent(nextHexagon, unit.getPosition());
+        boolean occupied = nextHexagon.isOccupied();
+        MaloWLogger.error("Bad position, occupied: " + occupied + ", adjacent: " + adjacent + ". Current position: " + unit.getPosition().toString()
             + " - Next position: " + position.toString(), new Exception());
-        unit.position = originalPosition;
+        originalHexagon.setUnit(unit);
         return false;
       }
     }
@@ -123,10 +131,10 @@ public class Game
   private boolean handleAttackAction(AttackAction action)
   {
     Unit unit = this.units.stream().filter(u -> u.unitId == action.unitId).findAny().get();
-    Position target = action.target;
-    if (target.isAdjacent(unit.position) && this.isPositionTaken(target))
+    Hexagon target = this.map.get(action.target);
+    if (HexagonHelper.isAdjacent(target, unit.getPosition()) && target.isOccupied())
     {
-      Unit victim = this.getUnitAtPosition(target);
+      Unit victim = target.getUnit();
       victim.hitpoints -= 10;
     }
     else
@@ -135,16 +143,6 @@ public class Game
     }
     this.players.stream().filter(p -> !p.username.equals(unit.owner)).forEach(p -> p.handleMessage(action));
     return true;
-  }
-
-  private boolean isPositionTaken(Position position)
-  {
-    return this.units.stream().anyMatch(u -> u.position.equals(position));
-  }
-
-  private Unit getUnitAtPosition(Position position)
-  {
-    return this.units.stream().filter(u -> u.position.equals(position)).findAny().get();
   }
 
   private void endGame(Player winner)

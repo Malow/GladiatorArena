@@ -21,34 +21,34 @@ public class RandomHexTest
     int distance;
     //
     startTime = System.nanoTime();
-    Hex from = new Hex(rand.nextInt(sizeX), rand.nextInt(sizeY));
-    Hex to = new Hex(rand.nextInt(sizeX), rand.nextInt(sizeY));
-    from = new Hex(0, 5);
-    to = new Hex(25, 5);
+    Hexagon from = new Hexagon(rand.nextInt(sizeX), rand.nextInt(sizeY));
+    Hexagon to = new Hexagon(rand.nextInt(sizeX), rand.nextInt(sizeY));
+    from = new Hexagon(0, 5);
+    to = new Hexagon(25, 5);
     System.out.println("From: " + from.toString() + " to: " + to.toString());
     endTime = System.nanoTime() - startTime;
     System.out.println("Time for coords: " + df.format(endTime / 1000000.0) + " ms");
     //
     startTime = System.nanoTime();
-    distance = m.getDistanceInHexes(from, to);
+    distance = HexagonHelper.getDistanceInHexes(from, to);
     endTime = System.nanoTime() - startTime;
     System.out.println("Time for getDistance: " + df.format(endTime / 1000000.0) + " ms");
     System.out.println("Distance Exact: " + distance);
     //
     startTime = System.nanoTime();
-    String sMap = m.getAsGraphicalStringWithDistances(from);
+    String sMap = HexagonHelper.visualizeHexagonMapWithDistances(sizeX, sizeY, from);
     endTime = System.nanoTime() - startTime;
     System.out.println("Time for getAsGraphicalStringWithDistances: " + df.format(endTime / 1000000.0) + " ms");
     System.out.println(sMap);
     //
     startTime = System.nanoTime();
-    List<Hex> path = m.aStar(from, to);
+    List<Hexagon> path = m.getAStarPath(from, to);
     endTime = System.nanoTime() - startTime;
     System.out.println("Time for astar: " + df.format(endTime / 1000000.0) + " ms");
     String pathS = "";
     if (path != null)
     {
-      for (Hex node : path)
+      for (Hexagon node : path)
       {
         pathS += node.toString() + " - ";
       }
@@ -64,15 +64,14 @@ public class RandomHexTest
       System.out.println("ERROR: couldnt find an astar path");
     }
     System.out.println("NBs_");
-    List<Hex> ns = m.getNeighborsForHex(from);
+    List<Hexagon> ns = m.getNeighborsForHex(from);
     ns.stream().forEach(n -> System.out.println(n.toString()));
   }
 
   @Test
   public void printCoords()
   {
-    HexagonMap m = new HexagonMap(10, 10);
-    System.out.println(m.getAsGraphicalStringWithPositions());
+    System.out.println(HexagonHelper.visualizeHexagonMapWithPositions(10, 10));
   }
 
   @Test
@@ -81,10 +80,10 @@ public class RandomHexTest
     int sizeX = 50;
     int sizeY = 50;
     HexagonMap m = new HexagonMap(sizeX, sizeY);
-    Hex from = new Hex(0, 0);
-    Hex to = new Hex(5, 5);
-    List<Hex> path = m.aStar(from, to);
-    for (Hex hex : path)
+    Hexagon from = new Hexagon(0, 0);
+    Hexagon to = new Hexagon(5, 5);
+    List<Hexagon> path = m.getAStarPath(from, to);
+    for (Hexagon hex : path)
     {
       System.out.println("path.add(new Position(" + hex.x + ", " + hex.y + "));");
     }

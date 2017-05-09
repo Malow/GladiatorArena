@@ -15,7 +15,7 @@ import com.github.malow.gladiatorarena.gamecore.message.AttackAction;
 import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
 import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
 import com.github.malow.gladiatorarena.gamecore.message.MoveAction;
-import com.github.malow.gladiatorarena.gamecore.unit.Unit;
+import com.github.malow.gladiatorarena.gamecore.message.UnitData;
 import com.github.malow.gladiatorarena.server.Config;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture;
 import com.github.malow.gladiatorarena.server.ServerConnection;
@@ -108,8 +108,8 @@ public class GameTest extends GladiatorArenaServerTestFixture
       assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
       GameStateUpdate gameStateUpdate = (GameStateUpdate) gameMessage.getMessage();
       assertNotNull(gameStateUpdate);
-      List<Unit> units = gameStateUpdate.units;
-      Unit myUnit = units.stream().filter(u -> u.owner.equals(this.username)).findAny().get();
+      List<UnitData> units = gameStateUpdate.units;
+      UnitData myUnit = units.stream().filter(u -> u.owner.equals(this.username)).findAny().get();
 
       List<Position> movePath = new ArrayList<>();
       movePath.add(new Position(1, 0));

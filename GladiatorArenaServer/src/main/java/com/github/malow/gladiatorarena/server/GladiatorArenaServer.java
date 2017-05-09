@@ -33,7 +33,7 @@ public class GladiatorArenaServer
 
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
         "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
-    // DEFAULT EMAIL SENDING TO FALSE FOR STAGING
+    // DEFAULT EMAIL-SENDING TO FALSE FOR STAGING
     accountServerConfig.enableEmailSending = false;
 
     start(gladConfig, accountServerConfig, httpsServer);

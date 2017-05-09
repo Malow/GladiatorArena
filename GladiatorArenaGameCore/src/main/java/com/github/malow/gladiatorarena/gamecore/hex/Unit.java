@@ -1,13 +1,10 @@
-package com.github.malow.gladiatorarena.gamecore.unit;
-
-import com.github.malow.gladiatorarena.gamecore.hex.Position;
+package com.github.malow.gladiatorarena.gamecore.hex;
 
 public class Unit
 {
   public int unitId;
   public String owner;
-  public Position position;
-
+  protected Position position;
   public double hitpoints = 10;
 
   public Unit(int unitId, String owner, Position position)
@@ -20,5 +17,10 @@ public class Unit
   public boolean isAlive()
   {
     return this.hitpoints > 0.0;
+  }
+
+  public Position getPosition()
+  {
+    return this.position;
   }
 }
