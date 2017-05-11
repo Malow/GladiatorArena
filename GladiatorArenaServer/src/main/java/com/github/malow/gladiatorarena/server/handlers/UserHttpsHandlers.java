@@ -14,7 +14,7 @@ public class UserHttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       CreateUserRequest req = createValidJsonRequest(request, CreateUserRequest.class);
-      Response resp = HttpsRequestHandler.createUser(req);
+      Response resp = UserRequestHandler.createUser(req);
       return GsonSingleton.toJson(resp);
     }
   }
@@ -25,7 +25,7 @@ public class UserHttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = HttpsRequestHandler.getMyInfo(req);
+      Response resp = UserRequestHandler.getMyInfo(req);
       return GsonSingleton.toJson(resp);
     }
   }
@@ -36,7 +36,7 @@ public class UserHttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = HttpsRequestHandler.queueMatchmaking(req);
+      Response resp = UserRequestHandler.queueMatchmaking(req);
       return GsonSingleton.toJson(resp);
     }
   }
@@ -47,7 +47,7 @@ public class UserHttpsHandlers
     public String handleRequestAndGetResponse(String request) throws BadRequestException
     {
       AuthorizedRequest req = createValidJsonRequest(request, AuthorizedRequest.class);
-      Response resp = HttpsRequestHandler.unqueueMatchmaking(req);
+      Response resp = UserRequestHandler.unqueueMatchmaking(req);
       return GsonSingleton.toJson(resp);
     }
   }

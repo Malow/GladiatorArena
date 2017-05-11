@@ -13,7 +13,7 @@ import com.github.malow.malowlib.database.DatabaseExceptions.UnexpectedException
 import com.github.malow.malowlib.database.DatabaseExceptions.UniqueException;
 import com.github.malow.malowlib.database.DatabaseExceptions.ZeroRowsReturnedException;
 
-public class HttpsRequestHandler
+public class UserRequestHandler
 {
   public static Response createUser(CreateUserRequest req)
   {
