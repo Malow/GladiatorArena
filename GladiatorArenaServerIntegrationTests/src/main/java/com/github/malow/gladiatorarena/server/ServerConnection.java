@@ -54,13 +54,13 @@ public class ServerConnection
 
   public static void clearCaches() throws Exception
   {
-    httpsClient.sendMessage("/account/clearcache", "");
-    httpsClient.sendMessage("/clearcache", "");
+    httpsClient.sendMessage("/account/clearcache", "{}");
+    httpsClient.sendMessage("/clearcache", "{}");
   }
 
   public static void waitForEmptyMatchmakingEngine() throws Exception
   {
-    String json = httpsClient.sendMessage("/waitforemptymatchmakingengine", "");
+    String json = httpsClient.sendMessage("/waitforemptymatchmakingengine", "{}");
     Response response = GsonSingleton.fromJson(json, Response.class);
     if (!response.result)
     {

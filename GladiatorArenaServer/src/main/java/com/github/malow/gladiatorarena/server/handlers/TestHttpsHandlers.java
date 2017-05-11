@@ -2,29 +2,30 @@ package com.github.malow.gladiatorarena.server.handlers;
 
 import com.github.malow.accountserver.comstructs.Response;
 import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
-import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess.ProcessState;
-import com.github.malow.malowlib.network.https.HttpsPostHandler;
+import com.github.malow.malowlib.network.https.HttpsJsonPostHandler;
+import com.github.malow.malowlib.network.https.HttpsPostResponse;
+import com.github.malow.malowlib.network.https.HttpsPostTestRequest;
 
 public class TestHttpsHandlers
 {
-  public static class ClearCacheHandler extends HttpsPostHandler
+  public static class ClearCacheHandler extends HttpsJsonPostHandler<HttpsPostTestRequest>
   {
     @Override
-    public String handleRequestAndGetResponse(String request)
+    public HttpsPostResponse handleRequestAndGetResponse(HttpsPostTestRequest request)
     {
       UserAccessorSingleton.get().clearCache();
       MatchmakingEngineSingleton.get().clearQueue();
       MaloWLogger.info("GladiatorArenaServer cleared cache.");
-      return GsonSingleton.toJson(new Response(true));
+      return new Response(true);
     }
   }
 
-  public static class WaitForEmptyMatchmakingEngine extends HttpsPostHandler
+  public static class WaitForEmptyMatchmakingEngine extends HttpsJsonPostHandler<HttpsPostTestRequest>
   {
     @Override
-    public String handleRequestAndGetResponse(String request)
+    public HttpsPostResponse handleRequestAndGetResponse(HttpsPostTestRequest request)
     {
       long start = System.currentTimeMillis();
       while (MatchmakingEngineSingleton.get().getEventQueueSize() != 0 || MatchmakingEngineSingleton.get().getNumberOfPlayersInQueue() != 0
@@ -36,7 +37,7 @@ public class TestHttpsHandlers
           if (System.currentTimeMillis() - start > 1000)
           {
             MaloWLogger.warning("GladiatorArenaServer WaitForEmptyMatchmakingEngine timed out");
-            return GsonSingleton.toJson(new Response(false));
+            return new Response(false);
           }
         }
         catch (InterruptedException e)
@@ -45,7 +46,7 @@ public class TestHttpsHandlers
         }
       }
       MaloWLogger.info("GladiatorArenaServer WaitForEmptyMatchmakingEngine successful after " + (System.currentTimeMillis() - start) + "ms.");
-      return GsonSingleton.toJson(new Response(true));
+      return new Response(true);
     }
   }
 }
