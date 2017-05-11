@@ -20,7 +20,7 @@ public class GladiatorArenaServerForTests
     HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
     httpsServer.start();
 
-    GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
+    GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig(7001);
     gladConfig.allowTestOperations = true;
 
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),

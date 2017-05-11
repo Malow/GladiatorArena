@@ -3,6 +3,12 @@ package com.github.malow.gladiatorarena.server;
 public class GladiatorArenaServerConfig
 {
   public boolean allowTestOperations = false;
+  public int gameSocketServerPort;
+
+  public GladiatorArenaServerConfig(int gameSocketServerPort)
+  {
+    this.gameSocketServerPort = gameSocketServerPort;
+  }
 
   // Static game settings, move in the future
   public static final int DEFAULT_RATING = 0;

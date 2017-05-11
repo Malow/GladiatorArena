@@ -154,7 +154,7 @@ public class MatchHandler extends MaloWProcess
   {
     try
     {
-      Integer accId = AccountServer.checkAuthentication(req.email, req.authToken);
+      Integer accId = AccountServer.authenticateAndGetAccountId(req.email, req.authToken);
       User user = UserAccessorSingleton.get().readByAccountId(accId);
       client.userId = user.getId();
       Lobby lobby = this.lobbies.get(req.gameId);
@@ -188,6 +188,7 @@ public class MatchHandler extends MaloWProcess
       client.setNotifier(this);
       client.start();
       this.players.add(client);
+      MaloWLogger.info("Client connected to MatchHandler");
     }
     else
     {

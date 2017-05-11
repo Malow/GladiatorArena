@@ -49,14 +49,18 @@ public class Lobby extends MaloWProcess
       Optional<NetworkPlayer> matchingPlayer = this.players.stream().filter(p -> p.userId.equals(player.userId)).findFirst();
       if (matchingPlayer.isPresent())
       {
+        MaloWLogger.info("Player " + player.username
+            + " connected to a lobby to which he was already connected, and as such the previous connection was removed.");
         matchingPlayer.get().client.setNotifier(null);
         matchingPlayer.get().client.close();
         this.players.remove(matchingPlayer.get());
       }
       this.players.add(player);
       this.game.addPlayer(player);
+      MaloWLogger.info("Player " + player.username + " connected added to lobby.");
       return true;
     }
+    MaloWLogger.info("Unexpected Player connected to a lobby with username: " + player.username);
     return false;
   }
 
@@ -81,6 +85,7 @@ public class Lobby extends MaloWProcess
         case NOT_STARTED:
           if (this.isAllUsersConnected() && this.isAllUsersReady())
           {
+            MaloWLogger.info("Game started.");
             this.status = GameStatus.IN_PROGRESS;
             this.game.start();
             this.lastGameUpdate = System.currentTimeMillis();
@@ -93,12 +98,13 @@ public class Lobby extends MaloWProcess
         case PAUSED_FOR_RECONNECT:
           if (this.isAllUsersConnected() && this.isAllUsersReady())
           {
+            MaloWLogger.info("All players have reconnected to the game and it is resumed.");
             this.status = GameStatus.IN_PROGRESS;
             this.lastGameUpdate = System.currentTimeMillis();
           }
           else if (this.isTimedOut(this.created, GladiatorArenaServerConfig.RECONNECT_TIMEOUT_SECONDS))
           {
-            // Handle dropping started game due to dissconnect
+            // Handle dropping started game due to disconnect
           }
           this.sleep();
           break;
@@ -122,6 +128,7 @@ public class Lobby extends MaloWProcess
           }
           else
           {
+            MaloWLogger.info("Players have dropped from an on-going game and it is now paused for reconnect.");
             this.status = GameStatus.PAUSED_FOR_RECONNECT;
           }
           break;
@@ -130,6 +137,7 @@ public class Lobby extends MaloWProcess
           if (this.players.stream().allMatch(c -> c.disconnected)
               || this.isTimedOut(this.ended, GladiatorArenaServerConfig.POST_GAME_DURATION_SECONDS))
           {
+            MaloWLogger.info("Game is timedout and closed.");
             this.close();
           }
           this.sleep();
@@ -175,6 +183,7 @@ public class Lobby extends MaloWProcess
     {
       case READY:
         from.ready = true;
+        MaloWLogger.info("Player " + from.username + " is now ready.");
         from.client.sendData(GsonSingleton.toJson(new SocketResponse(message.method, true)));
         break;
       case GAME_MESSAGE:

@@ -3,6 +3,7 @@ package com.github.malow.gladiatorarena.server.handlers;
 import com.github.malow.accountserver.comstructs.Response;
 import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
 import com.github.malow.malowlib.GsonSingleton;
+import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess.ProcessState;
 import com.github.malow.malowlib.network.https.HttpsPostHandler;
 
@@ -15,6 +16,7 @@ public class TestHttpsHandlers
     {
       UserAccessorSingleton.get().clearCache();
       MatchmakingEngineSingleton.get().clearQueue();
+      MaloWLogger.info("GladiatorArenaServer cleared cache.");
       return GsonSingleton.toJson(new Response(true));
     }
   }
@@ -33,13 +35,16 @@ public class TestHttpsHandlers
           Thread.sleep(10);
           if (System.currentTimeMillis() - start > 1000)
           {
+            MaloWLogger.warning("GladiatorArenaServer WaitForEmptyMatchmakingEngine timed out");
             return GsonSingleton.toJson(new Response(false));
           }
         }
         catch (InterruptedException e)
         {
+          MaloWLogger.error("WaitForEmptyMatchmakingEngine failed", e);
         }
       }
+      MaloWLogger.info("GladiatorArenaServer WaitForEmptyMatchmakingEngine successful after " + (System.currentTimeMillis() - start) + "ms.");
       return GsonSingleton.toJson(new Response(true));
     }
   }

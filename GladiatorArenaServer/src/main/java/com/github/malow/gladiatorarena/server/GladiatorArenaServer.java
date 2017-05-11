@@ -29,11 +29,12 @@ public class GladiatorArenaServer
 {
   public static void main(String[] args)
   {
+    MaloWLogger.setLoggingThresholdToInfo();
     HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
     httpsServer.start();
 
-    GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig();
+    GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig(7001);
 
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
         "gladiatormanager.noreply", "passwordFU", "GladiatorArena");
@@ -49,6 +50,7 @@ public class GladiatorArenaServer
       System.out.print("> ");
       input = in.next();
       handleInput(input);
+      System.out.println("Done");
     }
     in.close();
 
@@ -59,6 +61,8 @@ public class GladiatorArenaServer
 
   static void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServer httpsServer)
   {
+    MaloWLogger.info("Starting GladiatorArenaServer in directory " + System.getProperty("user.dir") + " using port " + httpsServer.getPort()
+        + " for HTTPS traffic and port " + gladConfig.gameSocketServerPort + " for game-socket traffic.");
     MatchHandlerSingleton.get().start();
     MatchmakingEngineConfig matchmakingEngineConfig = new MatchmakingEngineConfig();
     matchmakingEngineConfig.maxRatingDifference = Optional.of(1000.0);
@@ -66,7 +70,7 @@ public class GladiatorArenaServer
     MatchmakingEngineSingleton.init(matchmakingEngineConfig, MatchHandlerSingleton.get());
     MatchmakingEngineSingleton.get().start();
 
-    socketListener = new SocketListener(7001);
+    socketListener = new SocketListener(gladConfig.gameSocketServerPort);
     socketListener.start();
 
     UserAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));

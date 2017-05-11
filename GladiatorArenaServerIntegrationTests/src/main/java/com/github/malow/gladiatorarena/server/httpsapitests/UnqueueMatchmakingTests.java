@@ -32,18 +32,4 @@ public class UnqueueMatchmakingTests extends GladiatorArenaServerTestFixture
     assertEquals(false, response.result);
     assertEquals(ErrorMessages.NOT_IN_QUEUE, response.error);
   }
-
-  @Test
-  public void testUnqueueMatchmakingFailsWhenAlreadyHaveOngoingMatch() throws Exception
-  {
-    ServerConnection.createUser(USER1);
-    ServerConnection.createUser(USER2);
-    ServerConnection.queueMatchmaking(USER1);
-    ServerConnection.queueMatchmaking(USER2);
-    ServerConnection.waitForEmptyMatchmakingEngine();
-    String jsonResponse = ServerConnection.unqueueMatchmaking(USER1);
-    ErrorResponse response = GsonSingleton.fromJson(jsonResponse, ErrorResponse.class);
-    assertEquals(false, response.result);
-    assertEquals(ErrorMessages.ALREADY_HAVE_A_MATCH, response.error);
-  }
 }

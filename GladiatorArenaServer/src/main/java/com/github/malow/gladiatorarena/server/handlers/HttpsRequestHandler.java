@@ -23,16 +23,19 @@ public class HttpsRequestHandler
       user.accountId = req.accountId;
       user.username = req.username;
       UserAccessorSingleton.get().create(user);
+      MaloWLogger.info("CreateUser request from " + req.email + " with username " + req.username + " was successful.");
       return new Response(true);
     }
     catch (UniqueException e)
     {
       if (e.fieldName.equals("username"))
       {
+        MaloWLogger.info("CreateUser request from " + req.email + " with username " + req.username + " failed due to username being taken.");
         return new ErrorResponse(false, ErrorMessages.USERNAME_TAKEN);
       }
       else
       {
+        MaloWLogger.info("CreateUser request from " + req.email + " with username " + req.username + " failed due to account already having a user.");
         return new ErrorResponse(false, ErrorMessages.ACCOUNT_ALREADY_HAS_USER);
       }
     }
@@ -48,10 +51,12 @@ public class HttpsRequestHandler
     try
     {
       User user = UserAccessorSingleton.get().readByAccountId(req.accountId);
+      MaloWLogger.info("GetMyInfo request from " + req.email + "/" + user.username + " was successful.");
       return new GetMyInfoResponse(true, user);
     }
     catch (ZeroRowsReturnedException e)
     {
+      MaloWLogger.info("GetMyInfo request from " + req.email + " failed due to no user existing for the acocunt.");
       return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
@@ -69,10 +74,14 @@ public class HttpsRequestHandler
       User user = UserAccessorSingleton.get().readByAccountId(req.accountId);
       if (user.currentGameId != null)
       {
+        MaloWLogger
+            .info("QueueMatchmaking request from " + req.email + "/" + user.username + " failed due to the user already having an active match.");
         return new ErrorResponse(false, ErrorMessages.ALREADY_HAVE_A_MATCH);
       }
       if (user.isSearchingForGame)
       {
+        MaloWLogger
+            .info("QueueMatchmaking request from " + req.email + "/" + user.username + " failed due to the user already searching for a match.");
         return new ErrorResponse(false, ErrorMessages.ALREADY_IN_QUEUE);
       }
 
@@ -80,10 +89,12 @@ public class HttpsRequestHandler
       UserAccessorSingleton.get().updateCacheOnly(user);
       //NamedMutex example, unlock. Also unlock before the returns above tho
       MatchmakingEngineSingleton.get().enqueue(user.getId(), user.rating);
+      MaloWLogger.info("QueueMatchmaking request from " + req.email + "/" + user.username + " was successful.");
       return new Response(true);
     }
     catch (ZeroRowsReturnedException e)
     {
+      MaloWLogger.info("QueueMatchmaking request from " + req.email + " failed due to no user existing for the acocunt.");
       return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
@@ -99,12 +110,9 @@ public class HttpsRequestHandler
     {
       //NamedMutex example, Lock for "user:#{accountId}", otherwise multiple queues can be done
       User user = UserAccessorSingleton.get().readByAccountId(req.accountId);
-      if (user.currentGameId != null)
-      {
-        return new ErrorResponse(false, ErrorMessages.ALREADY_HAVE_A_MATCH);
-      }
       if (!user.isSearchingForGame)
       {
+        MaloWLogger.info("UnqueueMatchmaking request from " + req.email + "/" + user.username + " failed due to the user not being in queue.");
         return new ErrorResponse(false, ErrorMessages.NOT_IN_QUEUE);
       }
 
@@ -112,10 +120,12 @@ public class HttpsRequestHandler
       UserAccessorSingleton.get().updateCacheOnly(user);
       //NamedMutex example, unlock. Also unlock before the returns above tho
       MatchmakingEngineSingleton.get().dequeue(user.getId());
+      MaloWLogger.info("UnqueueMatchmaking request from " + req.email + "/" + user.username + " was successful.");
       return new Response(true);
     }
     catch (ZeroRowsReturnedException e)
     {
+      MaloWLogger.info("UnqQueueMatchmaking request from " + req.email + " failed due to no user existing for the acocunt.");
       return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
