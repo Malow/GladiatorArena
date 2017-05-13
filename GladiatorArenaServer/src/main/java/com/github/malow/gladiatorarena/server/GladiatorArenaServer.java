@@ -122,7 +122,7 @@ public class GladiatorArenaServer
       }
       else
       {
-        throw new Exception("Unsupported command");
+        System.out.println("Unsupported command: " + command);
       }
     }
     catch (Exception e)
