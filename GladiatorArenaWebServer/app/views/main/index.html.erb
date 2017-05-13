@@ -4,7 +4,7 @@
 		<h1><%= @username %></h1>
 		<p>Rating: <%= @rating %></p>
 		<p>IsSearchingForGame: <%= @isSearchingForGame %></p>
-		<p>CurrentGameId: <%= @currentGameId %></p>
+		<p>CurrentGameToken: <%= @currentGameToken %></p>
 		
 		<% if @isSearchingForGame %>
 			<%= form_tag("/leavequeue", method: "post") do %>

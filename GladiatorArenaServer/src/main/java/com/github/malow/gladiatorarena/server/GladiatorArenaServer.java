@@ -50,7 +50,6 @@ public class GladiatorArenaServer
       System.out.print("> ");
       input = in.next();
       handleInput(input);
-      System.out.println("Done");
     }
     in.close();
 
@@ -123,7 +122,9 @@ public class GladiatorArenaServer
       else
       {
         System.out.println("Unsupported command: " + command);
+        return;
       }
+      System.out.println("Done");
     }
     catch (Exception e)
     {

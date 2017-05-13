@@ -18,7 +18,7 @@ class MainController < ApplicationController
 					@username = response["username"]
 					@rating = response["rating"]
 					@isSearchingForGame = response["isSearchingForGame"]
-					@currentGameId = response["currentGameId"]
+					@currentGameToken = response["currentGameToken"]
 				else
 					if response["error"] == "No user found for account"
 						redirect_to "/create_user"
