@@ -42,10 +42,11 @@ public class GameTest extends GladiatorArenaServerTestFixture
 
     ServerConnection.waitForEmptyMatchmakingEngine();
 
-    Integer matchId = GsonSingleton.fromJson(ServerConnection.getMyInfo(USER1), GetMyInfoResponse.class).currentGameId;
-    GameSocketClient p1 = new GameSocketClient(USER1, matchId);
+    String gameToken1 = GsonSingleton.fromJson(ServerConnection.getMyInfo(USER1), GetMyInfoResponse.class).currentGameToken;
+    GameSocketClient p1 = new GameSocketClient(USER1, gameToken1);
+    String gameToken2 = GsonSingleton.fromJson(ServerConnection.getMyInfo(USER2), GetMyInfoResponse.class).currentGameToken;
+    GameSocketClient p2 = new GameSocketClient(USER2, gameToken2);
     p1.start();
-    GameSocketClient p2 = new GameSocketClient(USER2, matchId);
     p2.start();
     p1.waitUntillDone();
     p2.waitUntillDone();
@@ -55,7 +56,7 @@ public class GameTest extends GladiatorArenaServerTestFixture
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
-    assertNull(response.currentGameId);
+    assertNull(response.currentGameToken);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Double.valueOf(100.0), response.rating);
     assertEquals(USER1.username, response.username);
@@ -63,7 +64,7 @@ public class GameTest extends GladiatorArenaServerTestFixture
     jsonResponse = ServerConnection.getMyInfo(USER2);
     response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
-    assertNull(response.currentGameId);
+    assertNull(response.currentGameToken);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Double.valueOf(-100.0), response.rating);
     assertEquals(USER2.username, response.username);
@@ -71,22 +72,18 @@ public class GameTest extends GladiatorArenaServerTestFixture
 
   private static class GameSocketClient extends MaloWProcess
   {
-    private Integer gameId;
-    private String authToken;
-    private String email;
+    private String gameToken;
     private NetworkChannel server;
     private String username;
 
-    public GameSocketClient(TestUser user, Integer gameId)
+    public GameSocketClient(TestUser user, String gameToken)
     {
-      this.email = user.email;
-      this.authToken = user.authToken;
       this.username = user.username;
-      this.gameId = gameId;
+      this.gameToken = gameToken;
       this.server = new NetworkChannel(Config.GAME_SOCKET_SERVER_IP, Config.GAME_SOCKET_SERVER_PORT);
       this.server.setNotifier(this);
       this.server.start();
-      this.server.sendData(GsonSingleton.toJson(new JoinGameRequest(this.email, this.authToken, this.gameId)));
+      this.server.sendData(GsonSingleton.toJson(new JoinGameRequest(this.gameToken)));
     }
 
     @Override

@@ -44,24 +44,34 @@ public class Lobby extends MaloWProcess
   public boolean userConnected(NetworkPlayer player)
   {
     Optional<User> matchingUser = this.users.stream().filter(p -> p.getId().equals(player.userId)).findFirst();
-    if (matchingUser.isPresent())
+    if (!matchingUser.isPresent())
     {
-      Optional<NetworkPlayer> matchingPlayer = this.players.stream().filter(p -> p.userId.equals(player.userId)).findFirst();
-      if (matchingPlayer.isPresent())
-      {
-        MaloWLogger.info("Player " + player.username
-            + " connected to a lobby to which he was already connected, and as such the previous connection was removed.");
-        matchingPlayer.get().client.setNotifier(null);
-        matchingPlayer.get().client.close();
-        this.players.remove(matchingPlayer.get());
-      }
-      this.players.add(player);
-      this.game.addPlayer(player);
-      MaloWLogger.info("Player " + player.username + " connected added to lobby.");
-      return true;
+      MaloWLogger.info("Unexpected Player connected to a lobby with username: " + player.username);
+      return false;
     }
-    MaloWLogger.info("Unexpected Player connected to a lobby with username: " + player.username);
-    return false;
+
+    User user = matchingUser.get();
+    if (!user.currentGameToken.equals(player.gameToken))
+    {
+      MaloWLogger.info("Player " + player.username + " tried to connect to a lobby with a bad gameToken: " + player.gameToken + ". Expected: "
+          + user.currentGameToken);
+      return false;
+    }
+
+    Optional<NetworkPlayer> matchingPlayer = this.players.stream().filter(p -> p.userId.equals(player.userId)).findFirst();
+    if (matchingPlayer.isPresent())
+    {
+      MaloWLogger.info(
+          "Player " + player.username + " connected to a lobby to which he was already connected, and as such the previous connection was removed.");
+      matchingPlayer.get().client.setNotifier(null);
+      matchingPlayer.get().client.close();
+      this.players.remove(matchingPlayer.get());
+    }
+    this.players.add(player);
+    this.game.addPlayer(player);
+    MaloWLogger.info("Player " + player.username + " connected added to lobby.");
+    return true;
+
   }
 
   @Override

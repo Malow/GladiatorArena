@@ -13,12 +13,14 @@ public class NetworkPlayer extends Player
   public Integer userId;
   public boolean ready = false;
   public boolean disconnected = false;
+  public String gameToken;
 
-  public NetworkPlayer(User user, Client client)
+  public NetworkPlayer(User user, Client client, String gameToken)
   {
     super(user.username);
     this.userId = user.getId();
     this.client = client;
+    this.gameToken = gameToken;
   }
 
   @Override

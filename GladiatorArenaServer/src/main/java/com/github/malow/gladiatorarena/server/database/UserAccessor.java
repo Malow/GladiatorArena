@@ -85,6 +85,11 @@ public class UserAccessor extends Accessor<User>
     return null;
   }
 
+  public User readByGameToken(String gameToken)
+  {
+    return this.cacheByAccountId.values().stream().filter(u -> u.currentGameToken.equals(gameToken)).findAny().get();
+  }
+
   public void updateCacheOnly(User user)
   {
     this.cacheByAccountId.put(user.accountId, user);

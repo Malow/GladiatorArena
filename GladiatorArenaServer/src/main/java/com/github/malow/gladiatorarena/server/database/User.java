@@ -14,7 +14,7 @@ public class User extends DatabaseTableEntity
 
   // Only cached in memory
   @NotPersisted
-  public Integer currentGameId = null;
+  public String currentGameToken = null;
   @NotPersisted
   public boolean isSearchingForGame = false;
 }

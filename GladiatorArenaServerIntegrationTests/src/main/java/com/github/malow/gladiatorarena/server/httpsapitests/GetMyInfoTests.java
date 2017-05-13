@@ -22,7 +22,7 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
-    assertNull(response.currentGameId);
+    assertNull(response.currentGameToken);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Double.valueOf(0.0), response.rating);
     assertEquals(USER1.username, response.username);
@@ -55,7 +55,7 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
-    assertNull(response.currentGameId);
+    assertNull(response.currentGameToken);
     assertEquals(true, response.isSearchingForGame);
     assertEquals(Double.valueOf(0.0), response.rating);
     assertEquals(USER1.username, response.username);
@@ -72,7 +72,7 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
     String jsonResponse = ServerConnection.getMyInfo(USER1);
     GetMyInfoResponse response = GsonSingleton.fromJson(jsonResponse, GetMyInfoResponse.class);
     assertEquals(true, response.result);
-    assertNotNull(response.currentGameId);
+    assertNotNull(response.currentGameToken);
     assertEquals(false, response.isSearchingForGame);
     assertEquals(Double.valueOf(0.0), response.rating);
     assertEquals(USER1.username, response.username);

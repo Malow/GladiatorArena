@@ -3,10 +3,9 @@ package com.github.malow.gladiatorarena.server.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.github.malow.accountserver.AccountServer;
-import com.github.malow.accountserver.database.AccountAccessor.WrongAuthentificationTokenException;
 import com.github.malow.gladiatorarena.server.database.Match;
 import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.MatchReference;
@@ -40,15 +39,22 @@ public class MatchHandler extends MaloWProcess
   {
   }
 
-  private void createNewGame(List<User> expectedUsers)
+  private void createNewGame(MatchmakingResult matchmakingResult)
   {
+    //NamedMutexList mutexes = NamedMutexHandler.getAndLockMultipleLocksByNames(mutexNames);
+    List<User> expectedUsers = this.getExpectedUsersFromMatchmakingResult(matchmakingResult);
     try
     {
+      if (expectedUsers == null)
+      {
+        return;
+      }
       int gameId = nextGameId++;
       expectedUsers.stream().forEach(p ->
       {
+        String gameToken = gameId + "|" + UUID.randomUUID();
         p.isSearchingForGame = false;
-        p.currentGameId = gameId;
+        p.currentGameToken = gameToken;
         UserAccessorSingleton.get().updateCacheOnly(p);
       });
       Lobby lobby = new Lobby(gameId, expectedUsers);
@@ -61,9 +67,29 @@ public class MatchHandler extends MaloWProcess
       expectedUsers.stream().forEach(p ->
       {
         p.isSearchingForGame = false;
-        p.currentGameId = null;
+        p.currentGameToken = null;
         UserAccessorSingleton.get().updateCacheOnly(p);
       });
+    }
+    finally
+    {
+      //mutexes.unlockAll();
+    }
+  }
+
+  private List<User> getExpectedUsersFromMatchmakingResult(MatchmakingResult matchmakingResult)
+  {
+    try
+    {
+      User user1 = UserAccessorSingleton.get().read(matchmakingResult.player1.playerId);
+      User user2 = UserAccessorSingleton.get().read(matchmakingResult.player2.playerId);
+      List<User> expectedUsers = Arrays.asList(user1, user2);
+      return expectedUsers;
+    }
+    catch (Exception e)
+    {
+      MaloWLogger.error("Failed to get users for createNewGame", e);
+      return null;
     }
   }
 
@@ -91,7 +117,7 @@ public class MatchHandler extends MaloWProcess
         reference.username = user.username;
         references.add(reference);
         user.rating += reference.isWinner ? 100.0 : -100.0;
-        user.currentGameId = null;
+        user.currentGameToken = null;
         UserAccessorSingleton.get().update(user);
         MatchReferenceAccessorSingleton.get().create(reference);
       }
@@ -115,12 +141,10 @@ public class MatchHandler extends MaloWProcess
       if (ev instanceof MatchFoundEvent)
       {
         MatchFoundEvent event = (MatchFoundEvent) ev;
-        MatchmakingResult matchMakingResult = event.matchmakingResult;
+        MatchmakingResult matchmakingResult = event.matchmakingResult;
         try
         {
-          User user1 = UserAccessorSingleton.get().read(matchMakingResult.player1.playerId);
-          User user2 = UserAccessorSingleton.get().read(matchMakingResult.player2.playerId);
-          this.createNewGame(Arrays.asList(user1, user2));
+          this.createNewGame(matchmakingResult);
         }
         catch (Exception e)
         {
@@ -154,11 +178,12 @@ public class MatchHandler extends MaloWProcess
   {
     try
     {
-      Integer accId = AccountServer.authenticateAndGetAccountId(req.email, req.authToken);
-      User user = UserAccessorSingleton.get().readByAccountId(accId);
+      String gameToken = req.gameToken;
+      User user = UserAccessorSingleton.get().readByGameToken(gameToken);
       client.userId = user.getId();
-      Lobby lobby = this.lobbies.get(req.gameId);
-      if (lobby != null && lobby.userConnected(new NetworkPlayer(user, client)))
+      int matchId = Integer.parseInt(gameToken.split("|")[0]);
+      Lobby lobby = this.lobbies.get(matchId);
+      if (lobby != null && lobby.userConnected(new NetworkPlayer(user, client, gameToken)))
       {
         client.setNotifier(lobby);
         this.players.remove(client);
@@ -169,13 +194,9 @@ public class MatchHandler extends MaloWProcess
         client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
       }
     }
-    catch (WrongAuthentificationTokenException e)
-    {
-      client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
-    }
     catch (Exception e)
     {
-      MaloWLogger.error("Unexpected error when user " + req.email + " tried to join game " + req.gameId, e);
+      MaloWLogger.error("Unexpected error when user with gameToken " + req.gameToken + " tried to join lobby", e);
       client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
     }
   }

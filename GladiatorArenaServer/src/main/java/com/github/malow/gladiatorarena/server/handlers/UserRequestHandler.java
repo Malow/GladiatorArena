@@ -72,7 +72,7 @@ public class UserRequestHandler
     {
       //NamedMutex example, Lock for "user:#{accountId}", otherwise multiple queues can be done
       User user = UserAccessorSingleton.get().readByAccountId(req.accountId);
-      if (user.currentGameId != null)
+      if (user.currentGameToken != null)
       {
         MaloWLogger
             .info("QueueMatchmaking request from " + req.email + "/" + user.username + " failed due to the user already having an active match.");
