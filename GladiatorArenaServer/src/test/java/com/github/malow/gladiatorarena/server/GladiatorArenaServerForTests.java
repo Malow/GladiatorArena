@@ -16,6 +16,7 @@ public class GladiatorArenaServerForTests
   @Test
   public void runForIntegrationTests()
   {
+    //MaloWLogger.setLoggingThresholdToInfo(); // For debugging tests
     HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
     httpsServer.start();

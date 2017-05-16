@@ -12,9 +12,9 @@ public class UnitData
 
   public UnitData(Unit unit)
   {
-    this.unitId = unit.unitId;
+    this.unitId = unit.getId();
     this.owner = unit.owner;
-    this.position = new Position(unit.getPosition().x, unit.getPosition().y);
+    this.position = unit.getPosition();
     this.hitpoints = unit.hitpoints;
   }
 }

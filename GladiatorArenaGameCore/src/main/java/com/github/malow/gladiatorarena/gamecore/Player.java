@@ -5,7 +5,6 @@ import com.github.malow.gladiatorarena.gamecore.message.Message;
 public abstract class Player
 {
   public String username;
-  public boolean hasFinishedTurn = false;
 
   public Player(String username)
   {

@@ -198,7 +198,7 @@ public class Lobby extends MaloWProcess
         break;
       case GAME_MESSAGE:
         GameMessage gameMessage = GsonSingleton.fromJson(packet.message, GameMessage.class);
-        boolean result = this.game.handleMessage(gameMessage.getMessage(), from.username);
+        boolean result = this.game.handleMessage(gameMessage.getMessage(), from);
         if (!result)
         {
           MaloWLogger.error("Returned false from game.handleMessage: " + gameMessage.method, new Exception());

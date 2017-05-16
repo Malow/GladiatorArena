@@ -31,18 +31,24 @@ public class TestHttpsHandlers
       while (MatchmakingEngineSingleton.get().getEventQueueSize() != 0 || MatchmakingEngineSingleton.get().getNumberOfPlayersInQueue() != 0
           || MatchHandlerSingleton.get().getEventQueueSize() != 0 || MatchHandlerSingleton.get().getState().equals(ProcessState.RUNNING))
       {
+        if (System.currentTimeMillis() - start > 1000)
+        {
+          int mmEngineEventQueueSize = MatchmakingEngineSingleton.get().getEventQueueSize();
+          int mmEnginePlayersInQueue = MatchmakingEngineSingleton.get().getNumberOfPlayersInQueue();
+          int matchHandlerEventQueueSize = MatchHandlerSingleton.get().getEventQueueSize();
+          ProcessState matchHandlerState = MatchHandlerSingleton.get().getState();
+          MaloWLogger.warning("GladiatorArenaServer WaitForEmptyMatchmakingEngine timed out: mmEngineEventQueueSize: " + mmEngineEventQueueSize
+              + ", mmEnginePlayersInQueue: " + mmEnginePlayersInQueue + ", matchHandlerEventQueueSize: " + matchHandlerEventQueueSize
+              + ", matchHandlerState: " + matchHandlerState);
+          return new Response(false);
+        }
         try
         {
           Thread.sleep(10);
-          if (System.currentTimeMillis() - start > 1000)
-          {
-            MaloWLogger.warning("GladiatorArenaServer WaitForEmptyMatchmakingEngine timed out");
-            return new Response(false);
-          }
         }
         catch (InterruptedException e)
         {
-          MaloWLogger.error("WaitForEmptyMatchmakingEngine failed", e);
+          MaloWLogger.error("WaitForEmptyMatchmakingEngine sleep failed", e);
         }
       }
       MaloWLogger.info("GladiatorArenaServer WaitForEmptyMatchmakingEngine successful after " + (System.currentTimeMillis() - start) + "ms.");

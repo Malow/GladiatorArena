@@ -1,6 +1,5 @@
 package com.github.malow.gladiatorarena.gamecore;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,7 +14,6 @@ import com.github.malow.gladiatorarena.gamecore.hex.Unit;
 import com.github.malow.gladiatorarena.gamecore.message.AttackAction;
 import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
 import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
-import com.github.malow.gladiatorarena.gamecore.message.GameStateUpdate;
 import com.github.malow.gladiatorarena.gamecore.message.Message;
 import com.github.malow.gladiatorarena.gamecore.message.MoveAction;
 import com.github.malow.malowlib.MaloWLogger;
@@ -24,24 +22,24 @@ public class Game
 {
   private List<Player> players = new ArrayList<>();
   private List<Unit> units = new ArrayList<>();
-  private LocalDateTime roundStartedAt;
-  private int nextUnitId = 0;
+  private UnitOrder unitOrder = new UnitOrder();
   private HexagonMap map = new HexagonMap(10, 10);
 
   public void addPlayer(Player player)
   {
+    Position position = new Position(this.players.size() == 0 ? 0 : 5, this.players.size() == 0 ? 0 : 5);
     this.players.add(player);
-    int unitId = this.nextUnitId++;
-    Position position = new Position(unitId == 0 ? 0 : 5, unitId == 0 ? 0 : 5);
     Hexagon hexagon = this.map.get(position);
-    Unit unit = new Unit(unitId, player.username, hexagon);
+    Unit unit = new Unit(player.username, hexagon);
     hexagon.setUnit(unit);
     this.units.add(unit);
+    this.unitOrder.add(unit);
+    MaloWLogger.info("Player " + player.username + " added to game, with unit " + unit.getId());
   }
 
   public void start()
   {
-    this.nextTurn();
+    this.unitOrder.resetTurnTimer();
   }
 
   public Optional<GameResult> update(long diff)
@@ -55,54 +53,66 @@ public class Game
         List<Player> winners = this.players.stream().filter(p -> !p.username.equals(player.username)).collect(Collectors.toList());
         this.endGame(winners.get(0));
         GameResult result = new GameResult(winners, losers);
+        MaloWLogger.info("Game finished, winner: " + winners.get(0).username);
         return Optional.of(result);
       }
     }
 
-    if (this.hasAllPlayersFinishedTurn() || this.isTimedOut(this.roundStartedAt, GladiatorArenaGameConfig.GAME_ROUND_TIMEOUT_SECONDS))
+    if (this.unitOrder.hasTurnTimedOut())
     {
-      this.nextTurn();
+      Unit unit = this.unitOrder.getCurrent();
+      MaloWLogger.info("Unit " + unit.getId() + " belonging to player " + unit.owner + " had its turn timed out in game");
+      this.unitOrder.rotate();
     }
 
     return Optional.empty();
   }
 
-  private void nextTurn()
+  public boolean handleMessage(Message message, Player from)
   {
-    this.roundStartedAt = LocalDateTime.now();
-    this.players.stream().forEach(p -> p.hasFinishedTurn = false);
-    // Regen AP to mercs
-    // Count down CDs to mercs abilities
-    this.players.stream().forEach(p -> p.handleMessage(new GameStateUpdate(this.units)));
-  }
-
-  public boolean handleMessage(Message message, String fromUsername)
-  {
-    Player from = this.getPlayerByUsername(fromUsername);
     if (message instanceof MoveAction)
     {
       MoveAction action = (MoveAction) message;
-      return this.handleMoveAction(action);
+      if (!this.isCurrentUnitAndBelongsTo(action.unitId, from))
+      {
+        MaloWLogger.info(from.username + " tried to move with unit " + action.unitId + " but that unit either doesn't belong to " + from.username
+            + " or it's not that unit's turn right now.");
+        return false;
+      }
+      return this.handleMoveAction(this.unitOrder.getCurrent(), action);
     }
     else if (message instanceof AttackAction)
     {
       AttackAction action = (AttackAction) message;
-      return this.handleAttackAction(action);
+      if (!this.isCurrentUnitAndBelongsTo(action.unitId, from))
+      {
+        MaloWLogger.info(from.username + " tried to attack with unit " + action.unitId + " but that unit either doesn't belong to " + from.username
+            + " or it's not that unit's turn right now.");
+        return false;
+      }
+      return this.handleAttackAction(this.unitOrder.getCurrent(), action);
     }
     else if (message instanceof FinishTurn)
     {
-      from.hasFinishedTurn = true;
+      FinishTurn finishTurn = (FinishTurn) message;
+      if (!this.isCurrentUnitAndBelongsTo(finishTurn.unitId, from))
+      {
+        MaloWLogger.info(from.username + " tried to finish turn for unit " + finishTurn.unitId + " but that unit either doesn't belong to "
+            + from.username + " or it's not that unit's turn right now.");
+        return false;
+      }
+      this.handleFinishTurn(from, finishTurn);
     }
     else
     {
-      MaloWLogger.error("Got an unexpected request: " + message, new Exception());
+      MaloWLogger.error("Received an unexpected request: " + message, new Exception());
     }
     return true;
   }
 
-  private boolean handleMoveAction(MoveAction action)
+  private boolean handleMoveAction(Unit unit, MoveAction action)
   {
-    Unit unit = this.units.stream().filter(u -> u.unitId == action.unitId).findAny().get();
+    MaloWLogger.info("Unit " + unit.getId() + " initiating a move-action.");
     List<Position> path = action.path;
     Hexagon originalHexagon = this.map.get(unit.getPosition());
     for (Position position : path)
@@ -113,6 +123,7 @@ public class Game
       {
         currentHexagon.clearTile();
         nextHexagon.setUnit(unit);
+        MaloWLogger.info("Unit " + unit.getId() + " moved to position " + nextHexagon.toString());
       }
       else
       {
@@ -122,6 +133,7 @@ public class Game
             + " - Next position: " + position.toString(), new Exception());
         currentHexagon.clearTile();
         originalHexagon.setUnit(unit);
+        MaloWLogger.info("Unit " + unit.getId() + " moved to position " + originalHexagon.toString());
         return false;
       }
     }
@@ -129,40 +141,48 @@ public class Game
     return true;
   }
 
-  private boolean handleAttackAction(AttackAction action)
+  private boolean handleAttackAction(Unit unit, AttackAction action)
   {
-    Unit unit = this.units.stream().filter(u -> u.unitId == action.unitId).findAny().get();
     Hexagon target = this.map.get(action.target);
     if (HexagonHelper.isAdjacent(target, unit.getPosition()) && target.isOccupied())
     {
       Unit victim = target.getUnit();
       victim.hitpoints -= 10;
+      MaloWLogger.info("Unit " + unit.getId() + " attacked unit " + victim.getId());
     }
     else
     {
+      MaloWLogger.info("Unit " + unit.getId() + " at position " + unit.getPosition().toString() + " failed to attack position " + target.toString()
+          + ". IsAdjacent: " + HexagonHelper.isAdjacent(target, unit.getPosition()) + ", IsOccupied: " + target.isOccupied());
       return false;
     }
     this.players.stream().filter(p -> !p.username.equals(unit.owner)).forEach(p -> p.handleMessage(action));
     return true;
   }
 
+  private boolean handleFinishTurn(Player from, FinishTurn finishTurn)
+  {
+    MaloWLogger.info(from.username + " finished turn for " + finishTurn.unitId + " in game");
+    this.unitOrder.rotate();
+    return true;
+  }
+
+  private boolean isCurrentUnitAndBelongsTo(int unitId, Player player)
+  {
+    Unit unit = this.unitOrder.getCurrent();
+    if (unit.getId() != unitId)
+    {
+      return false;
+    }
+    if (!player.username.equals(unit.owner))
+    {
+      return false;
+    }
+    return true;
+  }
+
   private void endGame(Player winner)
   {
     this.players.stream().forEach(p -> p.handleMessage(new GameFinishedUpdate(winner.username)));
-  }
-
-  private boolean isTimedOut(LocalDateTime from, int seconds)
-  {
-    return from.plusSeconds(seconds).isBefore(LocalDateTime.now());
-  }
-
-  private boolean hasAllPlayersFinishedTurn()
-  {
-    return this.players.stream().allMatch(p -> p.hasFinishedTurn);
-  }
-
-  private Player getPlayerByUsername(String username)
-  {
-    return this.players.stream().filter(p -> p.username.equals(username)).findFirst().get();
   }
 }

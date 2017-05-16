@@ -125,10 +125,10 @@ public class UserRequestHandler
     }
     catch (ZeroRowsReturnedException e)
     {
-      MaloWLogger.info("UnqQueueMatchmaking request from " + req.email + " failed due to no user existing for the acocunt.");
+      MaloWLogger.info("UnqueueMatchmaking request from " + req.email + " failed due to no user existing for the acocunt.");
       return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
-    catch (UnexpectedException e)
+    catch (Exception e)
     {
       MaloWLogger.error("Unexpected error when trying to queueMatchmaking", e);
       return new ErrorResponse(false, "Unexpected error");
