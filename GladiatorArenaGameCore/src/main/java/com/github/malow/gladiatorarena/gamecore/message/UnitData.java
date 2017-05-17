@@ -14,7 +14,8 @@ public class UnitData
   {
     this.unitId = unit.getId();
     this.owner = unit.owner;
-    this.position = unit.getPosition();
+    // Needed because the getPosition is a hex object, which has a reference to the unit, which causes stack overflow when gson
+    this.position = new Position(unit.getPosition().x, unit.getPosition().y);
     this.hitpoints = unit.hitpoints;
   }
 }

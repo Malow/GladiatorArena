@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 
 import com.github.malow.gladiatorarena.gamecore.hex.Unit;
 
-public class GameStateUpdate extends Message
+public class GameStateInformation extends Message
 {
   public List<UnitData> units = new ArrayList<>();
 
-  public GameStateUpdate(List<Unit> units)
+  public GameStateInformation(List<Unit> units)
   {
     this.units = units.stream().map(u -> new UnitData(u)).collect(Collectors.toList());
   }

@@ -1,12 +1,14 @@
 package com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs;
 
-public class SocketErrorResponse extends SocketResponse
+public class SocketErrorResponse extends SocketMessage
 {
+  public SocketMethod requestMethod;
   public String error;
 
-  public SocketErrorResponse(SocketMethod method, boolean result, String error)
+  public SocketErrorResponse(SocketMethod requestMethod, String error)
   {
-    super(method, result);
+    super(SocketMethod.ERROR_RESPONSE);
+    this.requestMethod = requestMethod;
     this.error = error;
   }
 }

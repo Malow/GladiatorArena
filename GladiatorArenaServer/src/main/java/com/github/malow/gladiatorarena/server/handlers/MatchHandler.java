@@ -17,10 +17,10 @@ import com.github.malow.gladiatorarena.server.game.MatchResult;
 import com.github.malow.gladiatorarena.server.game.NetworkPlayer;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.Client;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.JoinGameRequest;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketErrorMessages;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.JoinGameMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketErrorResponse;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage.SocketMethod;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
@@ -154,27 +154,27 @@ public class MatchHandler extends MaloWProcess
       else if (ev instanceof GameNetworkPacket)
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
-        JoinGameRequest req = GsonSingleton.fromJson(packet.message, JoinGameRequest.class);
+        JoinGameMessage req = GsonSingleton.fromJson(packet.message, JoinGameMessage.class);
         if (req != null && req.isValid())
         {
-          if (req.method.equals(SocketMethod.JOIN_GAME_REQUEST))
+          if (req.method.equals(SocketMethod.JOIN_GAME))
           {
             this.handleJoinGameRequest(req, packet.client);
           }
           else
           {
-            packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, false, "Unexpected method")));
+            packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, "Unexpected method")));
           }
         }
         else
         {
-          packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(SocketMethod.UNKNOWN, false, "Bad Request")));
+          packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(SocketMethod.UNKNOWN, "Bad Request")));
         }
       }
     }
   }
 
-  private void handleJoinGameRequest(JoinGameRequest req, Client client)
+  private void handleJoinGameRequest(JoinGameMessage req, Client client)
   {
     try
     {
@@ -187,17 +187,16 @@ public class MatchHandler extends MaloWProcess
       {
         client.setNotifier(lobby);
         this.players.remove(client);
-        client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, true)));
       }
       else
       {
-        client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
+        client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, SocketErrorMessages.FAILED_TO_JOIN_GAME)));
       }
     }
     catch (Exception e)
     {
       MaloWLogger.error("Unexpected error when user with gameToken " + req.gameToken + " tried to join lobby", e);
-      client.sendData(GsonSingleton.toJson(new SocketResponse(req.method, false)));
+      client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, SocketErrorMessages.FAILED_TO_JOIN_GAME)));
     }
   }
 

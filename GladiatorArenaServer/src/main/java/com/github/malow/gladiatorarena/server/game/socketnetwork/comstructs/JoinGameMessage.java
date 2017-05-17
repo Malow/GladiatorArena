@@ -1,12 +1,12 @@
 package com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs;
 
-public class JoinGameRequest extends SocketMessage
+public class JoinGameMessage extends SocketMessage
 {
   public String gameToken;
 
-  public JoinGameRequest(String gameToken)
+  public JoinGameMessage(String gameToken)
   {
-    super(SocketMethod.JOIN_GAME_REQUEST);
+    super(SocketMethod.JOIN_GAME);
     this.gameToken = gameToken;
   }
 

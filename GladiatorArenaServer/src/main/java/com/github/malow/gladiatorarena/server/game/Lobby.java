@@ -13,8 +13,10 @@ import com.github.malow.gladiatorarena.server.GladiatorArenaServerConfig;
 import com.github.malow.gladiatorarena.server.database.User;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPacket;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameStatusUpdate;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.LobbyInformationMessage;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.ReadyMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketResponse;
 import com.github.malow.gladiatorarena.server.handlers.MatchHandlerSingleton;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.MaloWLogger;
@@ -70,8 +72,11 @@ public class Lobby extends MaloWProcess
     this.players.add(player);
     this.game.addPlayer(player);
     MaloWLogger.info("Player " + player.username + " connected added to lobby.");
-    return true;
 
+    Map<String, Boolean> playersReady = new HashMap<>();
+    this.players.stream().forEach(p -> playersReady.put(p.username, p.ready));
+    this.sendToAllConnectedClients(new LobbyInformationMessage(playersReady));
+    return true;
   }
 
   @Override
@@ -96,20 +101,20 @@ public class Lobby extends MaloWProcess
           if (this.isAllUsersConnected() && this.isAllUsersReady())
           {
             MaloWLogger.info("Game started.");
-            this.status = GameStatus.IN_PROGRESS;
-            this.game.start();
+            this.updateStatus(GameStatus.IN_PROGRESS);
+            this.game.startGame();
             this.lastGameUpdate = System.currentTimeMillis();
           }
           else if (this.isTimedOut(this.created, GladiatorArenaServerConfig.PRE_GAME_TIMEOUT_SECONDS))
           {
-            // Handle dropping game due to not all clients connected.
+            // TODO: Handle dropping game due to not all clients connected.
           }
           this.sleep();
         case PAUSED_FOR_RECONNECT:
           if (this.isAllUsersConnected() && this.isAllUsersReady())
           {
             MaloWLogger.info("All players have reconnected to the game and it is resumed.");
-            this.status = GameStatus.IN_PROGRESS;
+            this.updateStatus(GameStatus.IN_PROGRESS);
             this.lastGameUpdate = System.currentTimeMillis();
           }
           else if (this.isTimedOut(this.created, GladiatorArenaServerConfig.RECONNECT_TIMEOUT_SECONDS))
@@ -125,7 +130,7 @@ public class Lobby extends MaloWProcess
             this.lastGameUpdate = System.currentTimeMillis();
             if (gameResult.isPresent())
             {
-              this.status = GameStatus.FINISHED;
+              this.updateStatus(GameStatus.FINISHED);
               this.ended = LocalDateTime.now();
               Map<User, Boolean> users = new HashMap<User, Boolean>();
               gameResult.get().winners.stream().map(w -> this.users.stream().filter(p -> p.username.equals(w.username)).findFirst().get())
@@ -139,7 +144,7 @@ public class Lobby extends MaloWProcess
           else
           {
             MaloWLogger.info("Players have dropped from an on-going game and it is now paused for reconnect.");
-            this.status = GameStatus.PAUSED_FOR_RECONNECT;
+            this.updateStatus(GameStatus.PAUSED_FOR_RECONNECT);
           }
           break;
         case FINISHED:
@@ -155,7 +160,22 @@ public class Lobby extends MaloWProcess
         default:
           break;
       }
+
+      // TODO: Make some sort of thread pool for all lobbies, and some sort of advanced sleep depending on how long execution time took (like MatchmakingEngine).
+      try
+      {
+        Thread.sleep(10);
+      }
+      catch (InterruptedException e)
+      {
+      }
     }
+  }
+
+  private void updateStatus(GameStatus newStatus)
+  {
+    this.status = newStatus;
+    this.sendToAllConnectedClients(new GameStatusUpdate(newStatus));
   }
 
   private void sleep()
@@ -194,7 +214,7 @@ public class Lobby extends MaloWProcess
       case READY:
         from.ready = true;
         MaloWLogger.info("Player " + from.username + " is now ready.");
-        from.client.sendData(GsonSingleton.toJson(new SocketResponse(message.method, true)));
+        this.sendToAllConnectedClients(new ReadyMessage(from.username));
         break;
       case GAME_MESSAGE:
         GameMessage gameMessage = GsonSingleton.fromJson(packet.message, GameMessage.class);
@@ -222,6 +242,11 @@ public class Lobby extends MaloWProcess
   private NetworkPlayer getNetworkPlayerByUserId(Integer userId)
   {
     return this.players.stream().filter(p -> p.userId.equals(userId)).findFirst().get();
+  }
+
+  private void sendToAllConnectedClients(SocketMessage message)
+  {
+    this.players.stream().forEach(p -> p.client.sendData(GsonSingleton.toJson(message)));
   }
 
   @Override

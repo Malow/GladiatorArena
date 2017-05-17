@@ -14,8 +14,10 @@ import com.github.malow.gladiatorarena.gamecore.hex.Unit;
 import com.github.malow.gladiatorarena.gamecore.message.AttackAction;
 import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
 import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
+import com.github.malow.gladiatorarena.gamecore.message.GameStateInformation;
 import com.github.malow.gladiatorarena.gamecore.message.Message;
 import com.github.malow.gladiatorarena.gamecore.message.MoveAction;
+import com.github.malow.gladiatorarena.gamecore.message.NextTurn;
 import com.github.malow.malowlib.MaloWLogger;
 
 public class Game
@@ -37,9 +39,17 @@ public class Game
     MaloWLogger.info("Player " + player.username + " added to game, with unit " + unit.getId());
   }
 
-  public void start()
+  public void startGame()
   {
     this.unitOrder.resetTurnTimer();
+    this.sendMessageToAll(new GameStateInformation(this.units));
+    this.sendMessageToAll(new NextTurn(this.unitOrder.getCurrent().getId()));
+  }
+
+  private void nextTurn()
+  {
+    this.unitOrder.rotate();
+    this.sendMessageToAll(new NextTurn(this.unitOrder.getCurrent().getId()));
   }
 
   public Optional<GameResult> update(long diff)
@@ -62,7 +72,7 @@ public class Game
     {
       Unit unit = this.unitOrder.getCurrent();
       MaloWLogger.info("Unit " + unit.getId() + " belonging to player " + unit.owner + " had its turn timed out in game");
-      this.unitOrder.rotate();
+      this.nextTurn();
     }
 
     return Optional.empty();
@@ -137,7 +147,7 @@ public class Game
         return false;
       }
     }
-    this.players.stream().filter(p -> !p.username.equals(unit.owner)).forEach(p -> p.handleMessage(action));
+    this.sendMessageToAll(action);
     return true;
   }
 
@@ -156,14 +166,19 @@ public class Game
           + ". IsAdjacent: " + HexagonHelper.isAdjacent(target, unit.getPosition()) + ", IsOccupied: " + target.isOccupied());
       return false;
     }
-    this.players.stream().filter(p -> !p.username.equals(unit.owner)).forEach(p -> p.handleMessage(action));
+    this.sendMessageToAll(action);
     return true;
+  }
+
+  private void sendMessageToAll(Message message)
+  {
+    this.players.stream().forEach(p -> p.handleMessage(message));
   }
 
   private boolean handleFinishTurn(Player from, FinishTurn finishTurn)
   {
     MaloWLogger.info(from.username + " finished turn for " + finishTurn.unitId + " in game");
-    this.unitOrder.rotate();
+    this.nextTurn();
     return true;
   }
 

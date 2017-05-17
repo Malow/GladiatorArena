@@ -5,8 +5,11 @@ public class SocketMessage
   public static enum SocketMethod
   {
     UNKNOWN,
-    JOIN_GAME_REQUEST,
+    JOIN_GAME,
     READY,
+    ERROR_RESPONSE,
+    LOBBY_INFORMATION,
+    GAME_STATUS_UPDATE,
     GAME_MESSAGE
   }
 
