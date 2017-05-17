@@ -154,20 +154,30 @@ public class MatchHandler extends MaloWProcess
       else if (ev instanceof GameNetworkPacket)
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
-        JoinGameMessage req = GsonSingleton.fromJson(packet.message, JoinGameMessage.class);
-        if (req != null && req.isValid())
+        try
         {
-          if (req.method.equals(SocketMethod.JOIN_GAME))
+          JoinGameMessage req = GsonSingleton.fromJson(packet.message, JoinGameMessage.class);
+          if (req != null && req.isValid())
           {
-            this.handleJoinGameRequest(req, packet.client);
+            if (req.method.equals(SocketMethod.JOIN_GAME))
+            {
+              this.handleJoinGameRequest(req, packet.client);
+            }
+            else
+            {
+              MaloWLogger.info("MatchHandler got an unexpected method: " + req.method);
+              packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, "Unexpected method")));
+            }
           }
           else
           {
-            packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, "Unexpected method")));
+            MaloWLogger.info("MatchHandler got a bad request: " + packet.message);
+            packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(SocketMethod.UNKNOWN, "Bad Request")));
           }
         }
-        else
+        catch (Exception e)
         {
+          MaloWLogger.info("MatchHandler got a bad request: " + packet.message);
           packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(SocketMethod.UNKNOWN, "Bad Request")));
         }
       }
