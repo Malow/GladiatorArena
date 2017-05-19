@@ -26,7 +26,6 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Lobb
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.ReadyMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.malowlib.GsonSingleton;
-import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.network.NetworkChannel;
 import com.github.malow.malowlib.network.NetworkPacket;
@@ -53,33 +52,17 @@ public class TestGameClient extends MaloWProcess
   private <T> T waitForMessage(Class<? extends T> clazz)
   {
     NetworkPacket packet = (NetworkPacket) this.waitEvent();
-    try
-    {
-      T response = GsonSingleton.fromJson(packet.getMessage(), clazz);
-      return response;
-    }
-    catch (Exception e)
-    {
-      MaloWLogger.error("Failed to parse: " + packet.getMessage() + " into class " + clazz.getSimpleName(), e);
-      return null;
-    }
+    T response = GsonSingleton.fromJson(packet.getMessage(), clazz);
+    return response;
   }
 
   private <T> T waitGameForMessage(Class<? extends T> clazz)
   {
     NetworkPacket packet = (NetworkPacket) this.waitEvent();
-    try
-    {
-      GameMessage response = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
-      @SuppressWarnings("unchecked")
-      T message = (T) response.getMessage();
-      return message;
-    }
-    catch (Exception e)
-    {
-      MaloWLogger.error("Failed to parse: " + packet.getMessage() + " into class " + clazz.getSimpleName(), e);
-      return null;
-    }
+    GameMessage response = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
+    @SuppressWarnings("unchecked")
+    T message = (T) response.getMessage();
+    return message;
   }
 
   private void sendMessage(SocketMessage message)
