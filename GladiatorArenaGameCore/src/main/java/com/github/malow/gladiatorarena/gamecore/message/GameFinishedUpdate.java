@@ -1,11 +1,13 @@
 package com.github.malow.gladiatorarena.gamecore.message;
 
+import java.util.List;
+
 public class GameFinishedUpdate extends Message
 {
-  public String winner;
+  public List<String> winners;
 
-  public GameFinishedUpdate(String winner)
+  public GameFinishedUpdate(List<String> winners)
   {
-    this.winner = winner;
+    this.winners = winners;
   }
 }

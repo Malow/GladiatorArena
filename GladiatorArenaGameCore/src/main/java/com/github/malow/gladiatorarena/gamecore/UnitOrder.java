@@ -24,7 +24,9 @@ public class UnitOrder
   public Unit rotate()
   {
     this.turnStartedAt = LocalDateTime.now();
-    return this.queue.poll();
+    Unit unit = this.queue.poll();
+    this.queue.add(unit);
+    return this.queue.peek();
   }
 
   public void resetTurnTimer()

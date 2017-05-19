@@ -3,9 +3,18 @@ package com.github.malow.gladiatorarena.server.gametests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.assertj.core.api.Assertions;
+
+import com.github.malow.gladiatorarena.gamecore.hex.Position;
+import com.github.malow.gladiatorarena.gamecore.message.AttackAction;
+import com.github.malow.gladiatorarena.gamecore.message.FinishTurn;
+import com.github.malow.gladiatorarena.gamecore.message.GameFinishedUpdate;
 import com.github.malow.gladiatorarena.gamecore.message.GameStateInformation;
+import com.github.malow.gladiatorarena.gamecore.message.Message;
+import com.github.malow.gladiatorarena.gamecore.message.MoveAction;
 import com.github.malow.gladiatorarena.gamecore.message.NextTurn;
 import com.github.malow.gladiatorarena.gamecore.message.UnitData;
 import com.github.malow.gladiatorarena.server.Config;
@@ -17,6 +26,7 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Lobb
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.ReadyMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.malowlib.GsonSingleton;
+import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.network.NetworkChannel;
 import com.github.malow.malowlib.network.NetworkPacket;
@@ -43,22 +53,43 @@ public class TestGameClient extends MaloWProcess
   private <T> T waitForMessage(Class<? extends T> clazz)
   {
     NetworkPacket packet = (NetworkPacket) this.waitEvent();
-    T response = GsonSingleton.fromJson(packet.getMessage(), clazz);
-    return response;
+    try
+    {
+      T response = GsonSingleton.fromJson(packet.getMessage(), clazz);
+      return response;
+    }
+    catch (Exception e)
+    {
+      MaloWLogger.error("Failed to parse: " + packet.getMessage() + " into class " + clazz.getSimpleName(), e);
+      return null;
+    }
   }
 
   private <T> T waitGameForMessage(Class<? extends T> clazz)
   {
     NetworkPacket packet = (NetworkPacket) this.waitEvent();
-    GameMessage response = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
-    @SuppressWarnings("unchecked")
-    T message = (T) response.getMessage();
-    return message;
+    try
+    {
+      GameMessage response = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
+      @SuppressWarnings("unchecked")
+      T message = (T) response.getMessage();
+      return message;
+    }
+    catch (Exception e)
+    {
+      MaloWLogger.error("Failed to parse: " + packet.getMessage() + " into class " + clazz.getSimpleName(), e);
+      return null;
+    }
   }
 
   private void sendMessage(SocketMessage message)
   {
     this.server.sendData(GsonSingleton.toJson(message));
+  }
+
+  private void sendGameMessage(Message message)
+  {
+    this.server.sendData(GsonSingleton.toJson(new GameMessage(message)));
   }
 
   private void doLobby()
@@ -97,14 +128,69 @@ public class TestGameClient extends MaloWProcess
     UnitData myUnit = units.stream().filter(u -> u.owner.equals(this.myUsername)).findAny().get();
     UnitData otherUnit = units.stream().filter(u -> u.owner.equals(this.otherUsername)).findAny().get();
 
-    NextTurn nextTurnMessage = this.waitGameForMessage(NextTurn.class);
+    List<Position> movePath = Arrays.asList(new Position(1, 0), new Position(2, 1), new Position(2, 2), new Position(3, 2), new Position(4, 3),
+        new Position(4, 4), new Position(4, 5));
+
+    NextTurn nextTurn = this.waitGameForMessage(NextTurn.class);
     if (this.isFirst)
     {
-      assertEquals(nextTurnMessage.currentUnitId, myUnit.unitId);
+      assertEquals(nextTurn.currentUnitId, myUnit.unitId);
+
+      this.sendGameMessage(new MoveAction(myUnit.unitId, movePath));
+      MoveAction moveAction = this.waitGameForMessage(MoveAction.class);
+      assertEquals(moveAction.unitId, myUnit.unitId);
+      Assertions.assertThat(moveAction.path).containsExactlyElementsOf(movePath);
+      myUnit.position = moveAction.path.get(moveAction.path.size() - 1);
+
+      this.sendGameMessage(new AttackAction(myUnit.unitId, otherUnit.position));
+      AttackAction attackAction = this.waitGameForMessage(AttackAction.class);
+      assertEquals(attackAction.unitId, myUnit.unitId);
+      assertEquals(attackAction.target, otherUnit.position);
+
+      this.sendGameMessage(new FinishTurn(myUnit.unitId));
+      nextTurn = this.waitGameForMessage(NextTurn.class);
+      assertEquals(nextTurn.currentUnitId, otherUnit.unitId);
+
+      attackAction = this.waitGameForMessage(AttackAction.class);
+      assertEquals(attackAction.unitId, otherUnit.unitId);
+      assertEquals(attackAction.target, myUnit.position);
+
+      nextTurn = this.waitGameForMessage(NextTurn.class);
+      assertEquals(nextTurn.currentUnitId, myUnit.unitId);
+
+      this.sendGameMessage(new AttackAction(myUnit.unitId, otherUnit.position));
+      attackAction = this.waitGameForMessage(AttackAction.class);
+      assertEquals(attackAction.unitId, myUnit.unitId);
+      assertEquals(attackAction.target, otherUnit.position);
     }
     else
     {
-      assertEquals(nextTurnMessage.currentUnitId, otherUnit.unitId);
+      assertEquals(nextTurn.currentUnitId, otherUnit.unitId);
+
+      MoveAction moveAction = this.waitGameForMessage(MoveAction.class);
+      assertEquals(moveAction.unitId, otherUnit.unitId);
+      Assertions.assertThat(moveAction.path).containsExactlyElementsOf(movePath);
+      otherUnit.position = moveAction.path.get(moveAction.path.size() - 1);
+
+      AttackAction attackAction = this.waitGameForMessage(AttackAction.class);
+      assertEquals(attackAction.unitId, otherUnit.unitId);
+      assertEquals(attackAction.target, myUnit.position);
+
+      nextTurn = this.waitGameForMessage(NextTurn.class);
+      assertEquals(nextTurn.currentUnitId, myUnit.unitId);
+
+      this.sendGameMessage(new AttackAction(myUnit.unitId, otherUnit.position));
+      attackAction = this.waitGameForMessage(AttackAction.class);
+      assertEquals(attackAction.unitId, myUnit.unitId);
+      assertEquals(attackAction.target, otherUnit.position);
+
+      this.sendGameMessage(new FinishTurn(myUnit.unitId));
+      nextTurn = this.waitGameForMessage(NextTurn.class);
+      assertEquals(nextTurn.currentUnitId, otherUnit.unitId);
+
+      attackAction = this.waitGameForMessage(AttackAction.class);
+      assertEquals(attackAction.unitId, otherUnit.unitId);
+      assertEquals(attackAction.target, myUnit.position);
     }
   }
 
@@ -114,52 +200,16 @@ public class TestGameClient extends MaloWProcess
     this.doLobby();
     this.doGame();
 
-    /*
-    packet = (NetworkPacket) this.waitEvent();
-    GameMessage gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
-    assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
-    GameStateUpdate gameStateUpdate = (GameStateUpdate) gameMessage.getMessage();
-    assertNotNull(gameStateUpdate);
-    List<UnitData> units = gameStateUpdate.units;
-    UnitData myUnit = units.stream().filter(u -> u.owner.equals(this.username)).findAny().get();
-
-    List<Position> movePath = new ArrayList<>();
-    movePath.add(new Position(1, 0));
-    movePath.add(new Position(2, 1));
-    movePath.add(new Position(2, 2));
-    movePath.add(new Position(3, 2));
-    movePath.add(new Position(4, 3));
-    movePath.add(new Position(4, 4));
-    movePath.add(new Position(4, 5));
-
-    if (myUnit.position.equals(new Position(0, 0)))
+    GameFinishedUpdate gameFinished = this.waitGameForMessage(GameFinishedUpdate.class);
+    assertEquals(gameFinished.winners.size(), 1);
+    if (this.isFirst)
     {
-      this.server.sendData(GsonSingleton.toJson(new GameMessage(new MoveAction(myUnit.unitId, movePath))));
-      this.server.sendData(GsonSingleton.toJson(new GameMessage(new AttackAction(myUnit.unitId, new Position(5, 5)))));
+      assertEquals(gameFinished.winners.get(0), this.myUsername);
     }
     else
     {
-      packet = (NetworkPacket) this.waitEvent();
-      gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
-      assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
-      MoveAction moveAction = (MoveAction) gameMessage.getMessage();
-      assertNotEquals(myUnit.unitId, moveAction.unitId);
-      assertEquals(moveAction.path, movePath);
-
-      packet = (NetworkPacket) this.waitEvent();
-      gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
-      assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
-      AttackAction attackAction = (AttackAction) gameMessage.getMessage();
-      assertNotEquals(myUnit.unitId, attackAction.unitId);
-      assertEquals(attackAction.target, myUnit.position);
+      assertEquals(gameFinished.winners.get(0), this.otherUsername);
     }
-
-    packet = (NetworkPacket) this.waitEvent();
-    gameMessage = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
-    assertEquals(SocketMethod.GAME_MESSAGE, gameMessage.method);
-    GameFinishedUpdate gameFinishedUpdate = (GameFinishedUpdate) gameMessage.getMessage();
-    assertEquals(USER1.username, gameFinishedUpdate.winner);
-    */
   }
 
   @Override

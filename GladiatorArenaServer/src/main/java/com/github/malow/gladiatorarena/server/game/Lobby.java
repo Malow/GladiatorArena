@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.github.malow.gladiatorarena.gamecore.Game;
 import com.github.malow.gladiatorarena.gamecore.GameResult;
@@ -107,9 +108,11 @@ public class Lobby extends MaloWProcess
           }
           else if (this.isTimedOut(this.created, GladiatorArenaServerConfig.PRE_GAME_TIMEOUT_SECONDS))
           {
+            this.updateStatus(GameStatus.TIMED_OUT);
             // TODO: Handle dropping game due to not all clients connected.
           }
           this.sleep();
+          break;
         case PAUSED_FOR_RECONNECT:
           if (this.isAllUsersConnected() && this.isAllUsersReady())
           {
@@ -138,12 +141,24 @@ public class Lobby extends MaloWProcess
               gameResult.get().losers.stream().map(w -> this.users.stream().filter(p -> p.username.equals(w.username)).findFirst().get())
                   .forEach(p -> users.put(p, false));
               MatchResult matchResult = new MatchResult(users);
+              MaloWLogger.info("Game finished, winners: " + gameResult.get().winners.stream().map(w -> w.username).collect(Collectors.joining()));
               MatchHandlerSingleton.get().handleEndedGame(this.id, matchResult);
+            }
+            else
+            {
+              // TODO: Make some sort of thread pool for all lobbies, and some sort of advanced sleep depending on how long execution time took (like MatchmakingEngine).
+              try
+              {
+                Thread.sleep(5);
+              }
+              catch (InterruptedException e)
+              {
+              }
             }
           }
           else
           {
-            MaloWLogger.info("Players have dropped from an on-going game and it is now paused for reconnect.");
+            MaloWLogger.info("Players have dropped from an ongoing game and it is now paused for reconnect.");
             this.updateStatus(GameStatus.PAUSED_FOR_RECONNECT);
           }
           break;
@@ -159,15 +174,6 @@ public class Lobby extends MaloWProcess
           break;
         default:
           break;
-      }
-
-      // TODO: Make some sort of thread pool for all lobbies, and some sort of advanced sleep depending on how long execution time took (like MatchmakingEngine).
-      try
-      {
-        Thread.sleep(10);
-      }
-      catch (InterruptedException e)
-      {
       }
     }
   }

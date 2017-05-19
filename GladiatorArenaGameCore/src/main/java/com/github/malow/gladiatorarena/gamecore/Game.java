@@ -61,7 +61,7 @@ public class Game
       {
         List<Player> losers = Arrays.asList(player);
         List<Player> winners = this.players.stream().filter(p -> !p.username.equals(player.username)).collect(Collectors.toList());
-        this.endGame(winners.get(0));
+        this.sendMessageToAll(new GameFinishedUpdate(winners.stream().map(p -> p.username).collect(Collectors.toList())));
         GameResult result = new GameResult(winners, losers);
         MaloWLogger.info("Game finished, winner: " + winners.get(0).username);
         return Optional.of(result);
@@ -83,7 +83,7 @@ public class Game
     if (message instanceof MoveAction)
     {
       MoveAction action = (MoveAction) message;
-      if (!this.isCurrentUnitAndBelongsTo(action.unitId, from))
+      if (!this.isUnitsTurnAndBelongsTo(action.unitId, from))
       {
         MaloWLogger.info(from.username + " tried to move with unit " + action.unitId + " but that unit either doesn't belong to " + from.username
             + " or it's not that unit's turn right now.");
@@ -94,7 +94,7 @@ public class Game
     else if (message instanceof AttackAction)
     {
       AttackAction action = (AttackAction) message;
-      if (!this.isCurrentUnitAndBelongsTo(action.unitId, from))
+      if (!this.isUnitsTurnAndBelongsTo(action.unitId, from))
       {
         MaloWLogger.info(from.username + " tried to attack with unit " + action.unitId + " but that unit either doesn't belong to " + from.username
             + " or it's not that unit's turn right now.");
@@ -105,7 +105,7 @@ public class Game
     else if (message instanceof FinishTurn)
     {
       FinishTurn finishTurn = (FinishTurn) message;
-      if (!this.isCurrentUnitAndBelongsTo(finishTurn.unitId, from))
+      if (!this.isUnitsTurnAndBelongsTo(finishTurn.unitId, from))
       {
         MaloWLogger.info(from.username + " tried to finish turn for unit " + finishTurn.unitId + " but that unit either doesn't belong to "
             + from.username + " or it's not that unit's turn right now.");
@@ -157,7 +157,7 @@ public class Game
     if (HexagonHelper.isAdjacent(target, unit.getPosition()) && target.isOccupied())
     {
       Unit victim = target.getUnit();
-      victim.hitpoints -= 10;
+      victim.hitpoints -= 5;
       MaloWLogger.info("Unit " + unit.getId() + " attacked unit " + victim.getId());
     }
     else
@@ -177,12 +177,12 @@ public class Game
 
   private boolean handleFinishTurn(Player from, FinishTurn finishTurn)
   {
-    MaloWLogger.info(from.username + " finished turn for " + finishTurn.unitId + " in game");
+    MaloWLogger.info(from.username + " finished turn for unit " + finishTurn.unitId + " in game");
     this.nextTurn();
     return true;
   }
 
-  private boolean isCurrentUnitAndBelongsTo(int unitId, Player player)
+  private boolean isUnitsTurnAndBelongsTo(int unitId, Player player)
   {
     Unit unit = this.unitOrder.getCurrent();
     if (unit.getId() != unitId)
@@ -194,10 +194,5 @@ public class Game
       return false;
     }
     return true;
-  }
-
-  private void endGame(Player winner)
-  {
-    this.players.stream().forEach(p -> p.handleMessage(new GameFinishedUpdate(winner.username)));
   }
 }
