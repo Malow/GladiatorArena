@@ -10,7 +10,8 @@ public class SocketMessage
     ERROR_RESPONSE,
     LOBBY_INFORMATION,
     GAME_STATUS_UPDATE,
-    GAME_MESSAGE
+    GAME_MESSAGE,
+    PLAYER_CONNECTED
   }
 
   public SocketMethod method;

@@ -16,6 +16,7 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.GameNetworkPack
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameStatusUpdate;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.LobbyInformationMessage;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.PlayerConnectedMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.ReadyMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.gladiatorarena.server.handlers.MatchHandlerSingleton;
@@ -70,13 +71,16 @@ public class Lobby extends MaloWProcess
       matchingPlayer.get().client.close();
       this.players.remove(matchingPlayer.get());
     }
+
+    Map<String, Boolean> playersReady = new HashMap<>();
+    this.players.forEach(p -> playersReady.put(p.username, p.ready));
+    playersReady.put(player.username, false);
+    player.sendMessage(new LobbyInformationMessage(playersReady, player.username));
+    this.sendToAllConnectedClients(new PlayerConnectedMessage(player.username));
+
     this.players.add(player);
     this.game.addPlayer(player);
     MaloWLogger.info("Player " + player.username + " connected added to lobby.");
-
-    Map<String, Boolean> playersReady = new HashMap<>();
-    this.players.stream().forEach(p -> playersReady.put(p.username, p.ready));
-    this.sendToAllConnectedClients(new LobbyInformationMessage(playersReady));
     return true;
   }
 
@@ -252,7 +256,7 @@ public class Lobby extends MaloWProcess
 
   private void sendToAllConnectedClients(SocketMessage message)
   {
-    this.players.stream().forEach(p -> p.client.sendData(GsonSingleton.toJson(message)));
+    this.players.stream().forEach(p -> p.sendMessage(message));
   }
 
   @Override

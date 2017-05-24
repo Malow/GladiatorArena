@@ -5,6 +5,7 @@ import com.github.malow.gladiatorarena.gamecore.message.Message;
 import com.github.malow.gladiatorarena.server.database.User;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.Client;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameMessage;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.malowlib.GsonSingleton;
 
 public class NetworkPlayer extends Player
@@ -27,5 +28,10 @@ public class NetworkPlayer extends Player
   public void handleMessage(Message message)
   {
     this.client.sendData(GsonSingleton.toJson(new GameMessage(message)));
+  }
+
+  public void sendMessage(SocketMessage message)
+  {
+    this.client.sendData(GsonSingleton.toJson(message));
   }
 }

@@ -23,6 +23,7 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Game
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.GameStatusUpdate;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.JoinGameMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.LobbyInformationMessage;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.PlayerConnectedMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.ReadyMessage;
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.malowlib.GsonSingleton;
@@ -80,11 +81,14 @@ public class TestGameClient extends MaloWProcess
     this.sendMessage(new JoinGameMessage(this.gameToken));
 
     LobbyInformationMessage lobbyInfoMessage = this.waitForMessage(LobbyInformationMessage.class);
+    assertEquals(lobbyInfoMessage.yourUsername, this.myUsername);
     assertFalse(lobbyInfoMessage.players.get(this.myUsername));
+
     if (this.isFirst)
     {
-      lobbyInfoMessage = this.waitForMessage(LobbyInformationMessage.class);
-      assertEquals(lobbyInfoMessage.players.size(), 2);
+      assertEquals(lobbyInfoMessage.players.size(), 1);
+      PlayerConnectedMessage playerConnectedMessage = this.waitForMessage(PlayerConnectedMessage.class);
+      assertEquals(playerConnectedMessage.username, this.otherUsername);
       this.sendMessage(new ReadyMessage());
       ReadyMessage readyMessage = this.waitForMessage(ReadyMessage.class);
       assertEquals(readyMessage.username, this.myUsername);
@@ -93,6 +97,8 @@ public class TestGameClient extends MaloWProcess
     }
     else
     {
+      assertEquals(lobbyInfoMessage.players.size(), 2);
+      assertFalse(lobbyInfoMessage.players.get(this.otherUsername));
       ReadyMessage readyMessage = this.waitForMessage(ReadyMessage.class);
       assertEquals(readyMessage.username, this.otherUsername);
       this.sendMessage(new ReadyMessage());
