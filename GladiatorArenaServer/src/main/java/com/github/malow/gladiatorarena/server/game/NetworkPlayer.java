@@ -27,11 +27,11 @@ public class NetworkPlayer extends Player
   @Override
   public void handleMessage(Message message)
   {
-    this.client.sendData(GsonSingleton.toJson(new GameMessage(message)));
+    this.client.sendMessage(GsonSingleton.toJson(new GameMessage(message)));
   }
 
   public void sendMessage(SocketMessage message)
   {
-    this.client.sendData(GsonSingleton.toJson(message));
+    this.client.sendMessage(GsonSingleton.toJson(message));
   }
 }

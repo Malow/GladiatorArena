@@ -8,7 +8,7 @@ import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.gladiatorarena.server.database.MatchAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.MatchReferenceAccessorSingleton;
 import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
-import com.github.malow.gladiatorarena.server.game.socketnetwork.SocketListener;
+import com.github.malow.gladiatorarena.server.game.socketnetwork.ClientSocketListener;
 import com.github.malow.gladiatorarena.server.handlers.MatchHandlerSingleton;
 import com.github.malow.gladiatorarena.server.handlers.MatchmakingEngineSingleton;
 import com.github.malow.gladiatorarena.server.handlers.TestHttpsHandlers.ClearCacheHandler;
@@ -56,7 +56,7 @@ public class GladiatorArenaServer
     close();
   }
 
-  private static SocketListener socketListener;
+  private static ClientSocketListener socketListener;
 
   static void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServer httpsServer)
   {
@@ -69,7 +69,7 @@ public class GladiatorArenaServer
     MatchmakingEngineSingleton.init(matchmakingEngineConfig, MatchHandlerSingleton.get());
     MatchmakingEngineSingleton.get().start();
 
-    socketListener = new SocketListener(gladConfig.gameSocketServerPort);
+    socketListener = new ClientSocketListener(gladConfig.gameSocketServerPort, MatchHandlerSingleton.get());
     socketListener.start();
 
     UserAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));

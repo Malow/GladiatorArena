@@ -27,6 +27,7 @@ import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.malowprocess.ProcessEvent;
 import com.github.malow.malowlib.matchmakingengine.MatchFoundEvent;
 import com.github.malow.malowlib.matchmakingengine.MatchmakingResult;
+import com.github.malow.malowlib.network.ClientConnectedEvent;
 import com.github.malow.malowlib.network.NetworkChannel;
 
 public class MatchHandler extends MaloWProcess
@@ -151,6 +152,11 @@ public class MatchHandler extends MaloWProcess
           MaloWLogger.error("Critical error, unable to find User for match", e);
         }
       }
+      else if (ev instanceof ClientConnectedEvent)
+      {
+        ClientConnectedEvent cce = (ClientConnectedEvent) ev;
+        this.handlePlayerConnected(cce.client);
+      }
       else if (ev instanceof GameNetworkPacket)
       {
         GameNetworkPacket packet = (GameNetworkPacket) ev;
@@ -164,13 +170,13 @@ public class MatchHandler extends MaloWProcess
           else
           {
             MaloWLogger.info("MatchHandler got an unexpected method: " + req.method);
-            packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, "Unexpected method")));
+            packet.client.sendMessage(GsonSingleton.toJson(new SocketErrorResponse(req.method, "Unexpected method")));
           }
         }
         else
         {
           MaloWLogger.info("MatchHandler got a bad request: " + packet.message);
-          packet.client.sendData(GsonSingleton.toJson(new SocketErrorResponse(SocketMethod.UNKNOWN, "Bad Request")));
+          packet.client.sendMessage(GsonSingleton.toJson(new SocketErrorResponse(SocketMethod.UNKNOWN, "Bad Request")));
         }
       }
     }
@@ -192,23 +198,22 @@ public class MatchHandler extends MaloWProcess
       }
       else
       {
-        client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, SocketErrorMessages.FAILED_TO_JOIN_GAME)));
+        client.sendMessage(GsonSingleton.toJson(new SocketErrorResponse(req.method, SocketErrorMessages.FAILED_TO_JOIN_GAME)));
       }
     }
     catch (Exception e)
     {
       MaloWLogger.error("Unexpected error when user with gameToken " + req.gameToken + " tried to join lobby", e);
-      client.sendData(GsonSingleton.toJson(new SocketErrorResponse(req.method, SocketErrorMessages.FAILED_TO_JOIN_GAME)));
+      client.sendMessage(GsonSingleton.toJson(new SocketErrorResponse(req.method, SocketErrorMessages.FAILED_TO_JOIN_GAME)));
     }
   }
 
-  public void playerConnected(NetworkChannel nc)
+  private void handlePlayerConnected(NetworkChannel nc)
   {
     if (nc instanceof Client)
     {
       Client client = (Client) nc;
       client.setNotifier(this);
-      client.start();
       this.players.add(client);
       MaloWLogger.info("Client connected to MatchHandler");
     }

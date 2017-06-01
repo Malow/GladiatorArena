@@ -28,13 +28,13 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Read
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
-import com.github.malow.malowlib.network.NetworkChannel;
-import com.github.malow.malowlib.network.NetworkPacket;
+import com.github.malow.malowlib.network.MessageNetworkChannel;
+import com.github.malow.malowlib.network.NetworkMessage;
 
 public class TestGameClient extends MaloWProcess
 {
   private String gameToken;
-  private NetworkChannel server;
+  private MessageNetworkChannel server;
   private String myUsername;
   private String otherUsername;
   private boolean isFirst;
@@ -45,21 +45,20 @@ public class TestGameClient extends MaloWProcess
     this.otherUsername = otherUsername;
     this.gameToken = gameToken;
     this.isFirst = isFirst;
-    this.server = new NetworkChannel(Config.GAME_SOCKET_SERVER_IP, Config.GAME_SOCKET_SERVER_PORT);
+    this.server = new MessageNetworkChannel(Config.GAME_SOCKET_SERVER_IP, Config.GAME_SOCKET_SERVER_PORT);
     this.server.setNotifier(this);
-    this.server.start();
   }
 
   private <T> T waitForMessage(Class<? extends T> clazz)
   {
-    NetworkPacket packet = (NetworkPacket) this.waitEvent();
+    NetworkMessage packet = (NetworkMessage) this.waitEvent();
     T response = GsonSingleton.fromJson(packet.getMessage(), clazz);
     return response;
   }
 
   private <T> T waitGameForMessage(Class<? extends T> clazz)
   {
-    NetworkPacket packet = (NetworkPacket) this.waitEvent();
+    NetworkMessage packet = (NetworkMessage) this.waitEvent();
     GameMessage response = GsonSingleton.fromJson(packet.getMessage(), GameMessage.class);
     @SuppressWarnings("unchecked")
     T message = (T) response.getMessage();
@@ -68,12 +67,12 @@ public class TestGameClient extends MaloWProcess
 
   private void sendMessage(SocketMessage message)
   {
-    this.server.sendData(GsonSingleton.toJson(message));
+    this.server.sendMessage(GsonSingleton.toJson(message));
   }
 
   private void sendGameMessage(Message message)
   {
-    this.server.sendData(GsonSingleton.toJson(new GameMessage(message)));
+    this.server.sendMessage(GsonSingleton.toJson(new GameMessage(message)));
   }
 
   private void doLobby()
