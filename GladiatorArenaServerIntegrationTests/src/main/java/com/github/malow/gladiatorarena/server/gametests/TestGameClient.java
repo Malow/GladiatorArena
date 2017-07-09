@@ -28,8 +28,8 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Read
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
-import com.github.malow.malowlib.network.MessageNetworkChannel;
-import com.github.malow.malowlib.network.NetworkMessage;
+import com.github.malow.malowlib.network.message.MessageNetworkChannel;
+import com.github.malow.malowlib.network.message.NetworkMessage;
 
 public class TestGameClient extends MaloWProcess
 {

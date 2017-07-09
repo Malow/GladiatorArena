@@ -112,6 +112,7 @@ public class Lobby extends MaloWProcess
           }
           else if (this.isTimedOut(this.created, GladiatorArenaServerConfig.PRE_GAME_TIMEOUT_SECONDS))
           {
+            MaloWLogger.info("Game failed to start because clients were missing when it timed out and closed.");
             this.updateStatus(GameStatus.TIMED_OUT);
             // TODO: Handle dropping game due to not all clients connected.
           }
@@ -126,7 +127,7 @@ public class Lobby extends MaloWProcess
           }
           else if (this.isTimedOut(this.created, GladiatorArenaServerConfig.RECONNECT_TIMEOUT_SECONDS))
           {
-            // Handle dropping started game due to disconnect
+            // TODO: Handle dropping started game due to disconnect
           }
           this.sleep();
           break;
@@ -168,13 +169,16 @@ public class Lobby extends MaloWProcess
           break;
         case FINISHED:
         case TIMED_OUT:
-          if (this.players.stream().allMatch(c -> c.disconnected)
+          if (this.players.stream().allMatch(c -> !c.isConnected())
               || this.isTimedOut(this.ended, GladiatorArenaServerConfig.POST_GAME_DURATION_SECONDS))
           {
-            MaloWLogger.info("Game is timedout and closed.");
+            MaloWLogger.info("Closed a finished game.");
             this.close();
           }
-          this.sleep();
+          else
+          {
+            this.sleep();
+          }
           break;
         default:
           break;

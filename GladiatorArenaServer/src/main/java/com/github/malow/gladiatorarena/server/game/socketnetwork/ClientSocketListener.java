@@ -4,9 +4,9 @@ import java.net.Socket;
 
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
 import com.github.malow.malowlib.network.NetworkChannel;
-import com.github.malow.malowlib.network.SocketListener;
+import com.github.malow.malowlib.network.SocketAcceptor;
 
-public class ClientSocketListener extends SocketListener
+public class ClientSocketListener extends SocketAcceptor
 {
   public ClientSocketListener(int port, MaloWProcess notifier)
   {

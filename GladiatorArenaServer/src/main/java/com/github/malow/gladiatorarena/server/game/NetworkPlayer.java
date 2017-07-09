@@ -13,7 +13,6 @@ public class NetworkPlayer extends Player
   public Client client;
   public Integer userId;
   public boolean ready = false;
-  public boolean disconnected = false;
   public String gameToken;
 
   public NetworkPlayer(User user, Client client, String gameToken)
@@ -22,6 +21,11 @@ public class NetworkPlayer extends Player
     this.userId = user.getId();
     this.client = client;
     this.gameToken = gameToken;
+  }
+
+  public boolean isConnected()
+  {
+    return this.client.isConnected();
   }
 
   @Override

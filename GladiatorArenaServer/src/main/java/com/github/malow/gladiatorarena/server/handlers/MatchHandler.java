@@ -97,7 +97,7 @@ public class MatchHandler extends MaloWProcess
   public void handleEndedGame(Integer gameId, MatchResult matchResult)
   {
     this.lobbies.remove(gameId);
-    // Lock all users and update them
+    // TODO: Lock all users and update them
     //String[] mutexNames = matchResult.users.keySet().stream().map(w -> w.toString()).collect(Collectors.toList());
     //NamedMutexList mutexes = NamedMutexHandler.getAndLockMultipleLocksByNames(mutexNames);
     try

@@ -1,7 +1,6 @@
 package com.github.malow.gladiatorarena.server;
 
 import java.util.Optional;
-import java.util.Scanner;
 
 import com.github.malow.accountserver.AccountServer;
 import com.github.malow.accountserver.AccountServerConfig;
@@ -20,16 +19,25 @@ import com.github.malow.gladiatorarena.server.handlers.UserHttpsHandlers.Unqueue
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
+import com.github.malow.malowlib.malowcliapplication.Command;
+import com.github.malow.malowlib.malowcliapplication.MaloWCliApplication;
 import com.github.malow.malowlib.matchmakingengine.MatchmakingEngineConfig;
 import com.github.malow.malowlib.network.https.HttpsPostServer;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
 
-public class GladiatorArenaServer
+public class GladiatorArenaServer extends MaloWCliApplication
 {
   public static void main(String[] args)
   {
     MaloWLogger.setLoggingThresholdToInfo();
+    GladiatorArenaServer gladiatorArenaServer = new GladiatorArenaServer();
+    gladiatorArenaServer.run();
+  }
+
+  @Override
+  public void onStart()
+  {
     HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
     httpsServer.start();
@@ -41,24 +49,12 @@ public class GladiatorArenaServer
     // DEFAULT EMAIL-SENDING TO FALSE FOR STAGING
     accountServerConfig.enableEmailSending = false;
 
-    start(gladConfig, accountServerConfig, httpsServer);
-
-    String input = "";
-    Scanner in = new Scanner(System.in);
-    while (!input.equals("exit"))
-    {
-      System.out.print("> ");
-      input = in.next();
-      handleInput(input);
-    }
-    in.close();
-
-    close();
+    this.start(gladConfig, accountServerConfig, httpsServer);
   }
 
-  private static ClientSocketListener socketListener;
+  private ClientSocketListener socketListener;
 
-  static void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServer httpsServer)
+  public void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServer httpsServer)
   {
     MaloWLogger.info("Starting GladiatorArenaServer in directory " + System.getProperty("user.dir") + " using port " + httpsServer.getPort()
         + " for HTTPS traffic and port " + gladConfig.gameSocketServerPort + " for game-socket traffic.");
@@ -69,8 +65,8 @@ public class GladiatorArenaServer
     MatchmakingEngineSingleton.init(matchmakingEngineConfig, MatchHandlerSingleton.get());
     MatchmakingEngineSingleton.get().start();
 
-    socketListener = new ClientSocketListener(gladConfig.gameSocketServerPort, MatchHandlerSingleton.get());
-    socketListener.start();
+    this.socketListener = new ClientSocketListener(gladConfig.gameSocketServerPort, MatchHandlerSingleton.get());
+    this.socketListener.start();
 
     UserAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
     MatchAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
@@ -89,46 +85,36 @@ public class GladiatorArenaServer
     }
   }
 
-  static void close()
+  @Override
+  public void onStop()
   {
     AccountServer.close();
-    socketListener.close();
-    socketListener.waitUntillDone();
+    this.socketListener.close();
+    this.socketListener.waitUntillDone();
     MatchmakingEngineSingleton.get().close();
     MatchmakingEngineSingleton.get().waitUntillDone();
     MatchHandlerSingleton.get().close();
     MatchHandlerSingleton.get().waitUntillDone();
   }
 
-  static void handleInput(String command)
+  @Command
+  public void createDatabases() throws Exception
   {
-    try
-    {
-      if (command.equals("createDatabases"))
-      {
-        UserAccessorSingleton.get().createTable();
-        MatchAccessorSingleton.get().createTable();
-        MatchReferenceAccessorSingleton.get().createTable();
-        AccountServer.createDatabases();
-      }
-      else if (command.equals("enableEmails"))
-      {
-        AccountServer.enableEmailSending();
-      }
-      else if (command.equals("disableEmails"))
-      {
-        AccountServer.disableEmailSending();
-      }
-      else
-      {
-        System.out.println("Unsupported command: " + command);
-        return;
-      }
-      System.out.println("Done");
-    }
-    catch (Exception e)
-    {
-      MaloWLogger.error("Error while handling input: " + command + ". Error: ", e);
-    }
+    MatchReferenceAccessorSingleton.get().createTable();
+    UserAccessorSingleton.get().createTable();
+    MatchAccessorSingleton.get().createTable();
+    AccountServer.createDatabases();
+  }
+
+  @Command
+  public void enableEmails() throws Exception
+  {
+    AccountServer.enableEmailSending();
+  }
+
+  @Command
+  public void disableEmails() throws Exception
+  {
+    AccountServer.disableEmailSending();
   }
 }

@@ -1,7 +1,5 @@
 package com.github.malow.gladiatorarena.server;
 
-import java.util.Scanner;
-
 import org.junit.Test;
 
 import com.github.malow.accountserver.AccountServerConfig;
@@ -29,17 +27,19 @@ public class GladiatorArenaServerForTests
     accountServerConfig.enableEmailSending = false;
     accountServerConfig.allowTestOperations = true;
 
-    GladiatorArenaServer.start(gladConfig, accountServerConfig, httpsServer);
-
-    String input = "";
-    Scanner in = new Scanner(System.in);
-    while (!input.equals("exit"))
+    GladiatorArenaServer gladiatorArenaServer = new GladiatorArenaServer();
+    gladiatorArenaServer.start(gladConfig, accountServerConfig, httpsServer);
+    while (true)
     {
-      System.out.print("> ");
-      input = in.next();
+      try
+      {
+        Thread.sleep(1000);
+      }
+      catch (InterruptedException e)
+      {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
     }
-    in.close();
-
-    GladiatorArenaServer.close();
   }
 }
