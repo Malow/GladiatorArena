@@ -3,9 +3,9 @@ package com.github.malow.gladiatorarena.server;
 import org.junit.Test;
 
 import com.github.malow.accountserver.AccountServerConfig;
+import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
-import com.github.malow.malowlib.network.https.HttpsPostServer;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
 import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
 
@@ -16,8 +16,6 @@ public class GladiatorArenaServerForTests
   {
     //MaloWLogger.setLoggingThresholdToInfo(); // For debugging tests
     HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
-    HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
-    httpsServer.start();
 
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig(7001);
     gladConfig.allowTestOperations = true;
@@ -28,7 +26,7 @@ public class GladiatorArenaServerForTests
     accountServerConfig.allowTestOperations = true;
 
     GladiatorArenaServer gladiatorArenaServer = new GladiatorArenaServer();
-    gladiatorArenaServer.start(gladConfig, accountServerConfig, httpsServer);
+    gladiatorArenaServer.start(gladConfig, accountServerConfig, httpsConfig);
     while (true)
     {
       try
@@ -37,8 +35,7 @@ public class GladiatorArenaServerForTests
       }
       catch (InterruptedException e)
       {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        MaloWLogger.error("Error while sleeping: ", e);
       }
     }
   }

@@ -39,9 +39,6 @@ public class GladiatorArenaServer extends MaloWCliApplication
   public void onStart()
   {
     HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
-    HttpsPostServer httpsServer = new HttpsPostServer(httpsConfig);
-    httpsServer.start();
-
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig(7001);
 
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
@@ -49,14 +46,17 @@ public class GladiatorArenaServer extends MaloWCliApplication
     // DEFAULT EMAIL-SENDING TO FALSE FOR STAGING
     accountServerConfig.enableEmailSending = false;
 
-    this.start(gladConfig, accountServerConfig, httpsServer);
+    this.start(gladConfig, accountServerConfig, httpsConfig);
   }
 
   private ClientSocketListener socketListener;
+  private HttpsPostServer httpsServer;
 
-  public void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServer httpsServer)
+  public void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServerConfig httpsServerConfig)
   {
-    MaloWLogger.info("Starting GladiatorArenaServer in directory " + System.getProperty("user.dir") + " using port " + httpsServer.getPort()
+    this.httpsServer = new HttpsPostServer(httpsServerConfig);
+    this.httpsServer.start();
+    MaloWLogger.info("Starting GladiatorArenaServer in directory " + System.getProperty("user.dir") + " using port " + this.httpsServer.getPort()
         + " for HTTPS traffic and port " + gladConfig.gameSocketServerPort + " for game-socket traffic.");
     MatchHandlerSingleton.get().start();
     MatchmakingEngineConfig matchmakingEngineConfig = new MatchmakingEngineConfig();
@@ -72,16 +72,16 @@ public class GladiatorArenaServer extends MaloWCliApplication
     MatchAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
     MatchReferenceAccessorSingleton.init(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"));
 
-    AccountServer.start(accountServerConfig, httpsServer);
+    AccountServer.start(accountServerConfig, this.httpsServer);
 
-    httpsServer.createContext("/createuser", new CreateUserHandler());
-    httpsServer.createContext("/getmyinfo", new GetMyInfoHandler());
-    httpsServer.createContext("/queuematchmaking", new QueueMatchmakingHandler());
-    httpsServer.createContext("/unqueuematchmaking", new UnqueueMatchmakingHandler());
+    this.httpsServer.createContext("/createuser", new CreateUserHandler());
+    this.httpsServer.createContext("/getmyinfo", new GetMyInfoHandler());
+    this.httpsServer.createContext("/queuematchmaking", new QueueMatchmakingHandler());
+    this.httpsServer.createContext("/unqueuematchmaking", new UnqueueMatchmakingHandler());
     if (gladConfig.allowTestOperations)
     {
-      httpsServer.createContext("/clearcache", new ClearCacheHandler());
-      httpsServer.createContext("/waitforemptymatchmakingengine", new WaitForEmptyMatchmakingEngine());
+      this.httpsServer.createContext("/clearcache", new ClearCacheHandler());
+      this.httpsServer.createContext("/waitforemptymatchmakingengine", new WaitForEmptyMatchmakingEngine());
     }
   }
 
@@ -95,9 +95,11 @@ public class GladiatorArenaServer extends MaloWCliApplication
     MatchmakingEngineSingleton.get().waitUntillDone();
     MatchHandlerSingleton.get().close();
     MatchHandlerSingleton.get().waitUntillDone();
+    //DatabaseConnection.closeAll();
+    this.httpsServer.close();
   }
 
-  @Command
+  @Command(description = "Creates the databases and tables used. Deletes and drops any preexisting.")
   public void createDatabases() throws Exception
   {
     MatchReferenceAccessorSingleton.get().createTable();
@@ -106,13 +108,13 @@ public class GladiatorArenaServer extends MaloWCliApplication
     AccountServer.createDatabases();
   }
 
-  @Command
+  @Command(description = "Enables sending emails.")
   public void enableEmails() throws Exception
   {
     AccountServer.enableEmailSending();
   }
 
-  @Command
+  @Command(description = "Disables sending emails.")
   public void disableEmails() throws Exception
   {
     AccountServer.disableEmailSending();
