@@ -61,6 +61,7 @@ public class GetMyInfoTests extends GladiatorArenaServerTestFixture
     assertEquals(USER1.username, response.username);
   }
 
+  //TODO: Unstable?
   @Test
   public void testGetMyInfoReturnsCorrectDataAfterFindingGame() throws Exception
   {

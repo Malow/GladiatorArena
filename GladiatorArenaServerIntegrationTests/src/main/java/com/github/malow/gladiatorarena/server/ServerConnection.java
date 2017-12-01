@@ -6,16 +6,15 @@ import com.github.malow.accountserver.comstructs.account.LoginRequest;
 import com.github.malow.gladiatorarena.server.GladiatorArenaServerTestFixture.TestUser;
 import com.github.malow.gladiatorarena.server.comstructs.CreateUserRequest;
 import com.github.malow.malowlib.GsonSingleton;
-import com.github.malow.malowlib.network.https.HttpsPostClient;
+import com.github.malow.malowlib.network.https.HttpPostClient;
 
 public class ServerConnection
 {
-  public static final HttpsPostClient httpsClient = new HttpsPostClient(Config.HTTPS_SERVER_HOST, true);
+  public static final HttpPostClient httpsClient = new HttpPostClient(Config.HTTPS_SERVER_HOST, true);
 
   public static String login(TestUser user) throws Exception
   {
-    String request = GsonSingleton.toJson(new LoginRequest(user.email, user.password));
-    return httpsClient.sendMessage("/account/login", request);
+    return httpsClient.sendMessage("/account/login", new LoginRequest(user.email, user.password));
   }
 
   public static String createUser(TestUser user) throws Exception
@@ -25,8 +24,7 @@ public class ServerConnection
 
   public static String createUser(String email, String authToken, String username) throws Exception
   {
-    String request = GsonSingleton.toJson(new CreateUserRequest(email, authToken, username));
-    return httpsClient.sendMessage("/createuser", request);
+    return httpsClient.sendMessage("/createuser", new CreateUserRequest(email, authToken, username));
   }
 
   public static String getMyInfo(TestUser user) throws Exception
@@ -36,20 +34,17 @@ public class ServerConnection
 
   public static String getMyInfo(String email, String authToken) throws Exception
   {
-    String request = GsonSingleton.toJson(new AuthorizedRequest(email, authToken));
-    return httpsClient.sendMessage("/getmyinfo", request);
+    return httpsClient.sendMessage("/getmyinfo", new AuthorizedRequest(email, authToken));
   }
 
   public static String queueMatchmaking(TestUser user) throws Exception
   {
-    String request = GsonSingleton.toJson(new AuthorizedRequest(user.email, user.authToken));
-    return httpsClient.sendMessage("/queuematchmaking", request);
+    return httpsClient.sendMessage("/queuematchmaking", new AuthorizedRequest(user.email, user.authToken));
   }
 
   public static String unqueueMatchmaking(TestUser user) throws Exception
   {
-    String request = GsonSingleton.toJson(new AuthorizedRequest(user.email, user.authToken));
-    return httpsClient.sendMessage("/unqueuematchmaking", request);
+    return httpsClient.sendMessage("/unqueuematchmaking", new AuthorizedRequest(user.email, user.authToken));
   }
 
   public static void clearCaches() throws Exception

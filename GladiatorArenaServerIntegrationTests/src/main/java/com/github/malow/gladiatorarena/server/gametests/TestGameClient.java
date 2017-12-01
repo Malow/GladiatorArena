@@ -28,8 +28,8 @@ import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.Read
 import com.github.malow.gladiatorarena.server.game.socketnetwork.comstructs.SocketMessage;
 import com.github.malow.malowlib.GsonSingleton;
 import com.github.malow.malowlib.malowprocess.MaloWProcess;
-import com.github.malow.malowlib.network.message.MessageNetworkChannel;
-import com.github.malow.malowlib.network.message.NetworkMessage;
+import com.github.malow.malowlib.network.tpcsocketmessage.MessageNetworkChannel;
+import com.github.malow.malowlib.network.tpcsocketmessage.NetworkMessage;
 
 public class TestGameClient extends MaloWProcess
 {
@@ -80,7 +80,7 @@ public class TestGameClient extends MaloWProcess
     this.sendMessage(new JoinGameMessage(this.gameToken));
 
     LobbyInformationMessage lobbyInfoMessage = this.waitForMessage(LobbyInformationMessage.class);
-    assertEquals(lobbyInfoMessage.yourUsername, this.myUsername);
+    assertEquals(lobbyInfoMessage.yourUsername, this.myUsername); // TODO: lobbyInfoMessage.yourUsername was null here once. Unstable?
     assertFalse(lobbyInfoMessage.players.get(this.myUsername));
 
     if (this.isFirst)

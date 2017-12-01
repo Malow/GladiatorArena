@@ -3,7 +3,7 @@ package com.github.malow.gladiatorarena.server.game.socketnetwork;
 import java.net.Socket;
 
 import com.github.malow.malowlib.malowprocess.ProcessEvent;
-import com.github.malow.malowlib.network.message.MessageNetworkChannel;
+import com.github.malow.malowlib.network.tpcsocketmessage.MessageNetworkChannel;
 
 public class Client extends MessageNetworkChannel
 {

@@ -6,8 +6,8 @@ import com.github.malow.accountserver.AccountServerConfig;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
-import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
-import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
+import com.github.malow.malowlib.network.https.SimpleHttpsServerConfig;
+import com.github.malow.malowlib.network.https.SimpleHttpsServerConfig.LetsEncryptConfig;
 
 public class GladiatorArenaServerForTests
 {
@@ -15,7 +15,7 @@ public class GladiatorArenaServerForTests
   public void runForIntegrationTests()
   {
     //MaloWLogger.setLoggingThresholdToInfo(); // For debugging tests
-    HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
+    SimpleHttpsServerConfig httpsConfig = new SimpleHttpsServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
 
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig(7001);
     gladConfig.allowTestOperations = true;

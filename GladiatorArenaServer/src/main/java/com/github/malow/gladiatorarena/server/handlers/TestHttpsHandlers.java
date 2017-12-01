@@ -4,16 +4,16 @@ import com.github.malow.accountserver.comstructs.Response;
 import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess.ProcessState;
-import com.github.malow.malowlib.network.https.HttpsJsonPostHandler;
-import com.github.malow.malowlib.network.https.HttpsPostResponse;
-import com.github.malow.malowlib.network.https.HttpsPostTestRequest;
+import com.github.malow.malowlib.network.https.HttpRequestHandler;
+import com.github.malow.malowlib.network.https.HttpResponse;
+import com.github.malow.malowlib.network.https.HttpTestRequest;
 
 public class TestHttpsHandlers
 {
-  public static class ClearCacheHandler extends HttpsJsonPostHandler<HttpsPostTestRequest>
+  public static class ClearCacheHandler extends HttpRequestHandler<HttpTestRequest>
   {
     @Override
-    public HttpsPostResponse handleRequestAndGetResponse(HttpsPostTestRequest request)
+    public HttpResponse handleRequestAndGetResponse(HttpTestRequest request)
     {
       UserAccessorSingleton.get().clearCache();
       MatchmakingEngineSingleton.get().clearQueue();
@@ -22,10 +22,10 @@ public class TestHttpsHandlers
     }
   }
 
-  public static class WaitForEmptyMatchmakingEngine extends HttpsJsonPostHandler<HttpsPostTestRequest>
+  public static class WaitForEmptyMatchmakingEngine extends HttpRequestHandler<HttpTestRequest>
   {
     @Override
-    public HttpsPostResponse handleRequestAndGetResponse(HttpsPostTestRequest request)
+    public HttpResponse handleRequestAndGetResponse(HttpTestRequest request)
     {
       long start = System.currentTimeMillis();
       while (MatchmakingEngineSingleton.get().getEventQueueSize() != 0 || MatchmakingEngineSingleton.get().getNumberOfPlayersInQueue() != 0

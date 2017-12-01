@@ -22,9 +22,9 @@ import com.github.malow.malowlib.database.DatabaseConnection.DatabaseType;
 import com.github.malow.malowlib.malowcliapplication.Command;
 import com.github.malow.malowlib.malowcliapplication.MaloWCliApplication;
 import com.github.malow.malowlib.matchmakingengine.MatchmakingEngineConfig;
-import com.github.malow.malowlib.network.https.HttpsPostServer;
-import com.github.malow.malowlib.network.https.HttpsPostServerConfig;
-import com.github.malow.malowlib.network.https.HttpsPostServerConfig.LetsEncryptConfig;
+import com.github.malow.malowlib.network.https.SimpleHttpsServer;
+import com.github.malow.malowlib.network.https.SimpleHttpsServerConfig;
+import com.github.malow.malowlib.network.https.SimpleHttpsServerConfig.LetsEncryptConfig;
 
 public class GladiatorArenaServer extends MaloWCliApplication
 {
@@ -38,7 +38,7 @@ public class GladiatorArenaServer extends MaloWCliApplication
   @Override
   public void onStart()
   {
-    HttpsPostServerConfig httpsConfig = new HttpsPostServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
+    SimpleHttpsServerConfig httpsConfig = new SimpleHttpsServerConfig(7000, new LetsEncryptConfig("LetsEncryptCerts"), "password");
     GladiatorArenaServerConfig gladConfig = new GladiatorArenaServerConfig(7001);
 
     AccountServerConfig accountServerConfig = new AccountServerConfig(DatabaseConnection.get(DatabaseType.SQLITE_FILE, "GladiatorArena"),
@@ -50,11 +50,11 @@ public class GladiatorArenaServer extends MaloWCliApplication
   }
 
   private ClientSocketListener socketListener;
-  private HttpsPostServer httpsServer;
+  private SimpleHttpsServer httpsServer;
 
-  public void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, HttpsPostServerConfig httpsServerConfig)
+  public void start(GladiatorArenaServerConfig gladConfig, AccountServerConfig accountServerConfig, SimpleHttpsServerConfig httpsServerConfig)
   {
-    this.httpsServer = new HttpsPostServer(httpsServerConfig);
+    this.httpsServer = new SimpleHttpsServer(httpsServerConfig);
     this.httpsServer.start();
     MaloWLogger.info("Starting GladiatorArenaServer in directory " + System.getProperty("user.dir") + " using port " + this.httpsServer.getPort()
         + " for HTTPS traffic and port " + gladConfig.gameSocketServerPort + " for game-socket traffic.");
