@@ -1,6 +1,5 @@
 package com.github.malow.gladiatorarena.server.database;
 
-import java.sql.PreparedStatement;
 import java.util.List;
 
 import com.github.malow.malowlib.database.Accessor;
@@ -23,14 +22,13 @@ public class MatchReferenceAccessor extends Accessor<MatchReference>
 
   public List<MatchReference> readMultipleByUser(Integer userId) throws ZeroRowsReturnedException, UnexpectedException
   {
-    PreparedStatement statement = null;
     try
     {
-      statement = this.readMultipleByUserIdStatements.get();
-      statement.setInt(1, userId);
-      List<MatchReference> references = this.readMultipleWithPopulatedStatement(statement);
-      this.readMultipleByUserIdStatements.add(statement);
-      return references;
+      return this.readMultipleByUserIdStatements.useStatement(statement ->
+      {
+        statement.setInt(1, userId);
+        return this.readMultipleWithPopulatedStatement(statement);
+      });
     }
     catch (ZeroRowsReturnedException e)
     {
@@ -38,23 +36,20 @@ public class MatchReferenceAccessor extends Accessor<MatchReference>
     }
     catch (Exception e)
     {
-      this.closeStatement(statement);
-      this.logAndReThrowUnexpectedException(
+      throw this.logAndCreateUnexpectedException(
           "Unexpected error when trying to read a " + this.entityClass.getSimpleName() + " with userId " + userId + " in accessor", e);
     }
-    return null;
   }
 
   public List<MatchReference> readMultipleByMatch(Integer matchId) throws ZeroRowsReturnedException, UnexpectedException
   {
-    PreparedStatement statement = null;
     try
     {
-      statement = this.readMultipleByMatchIdStatements.get();
-      statement.setInt(1, matchId);
-      List<MatchReference> references = this.readMultipleWithPopulatedStatement(statement);
-      this.readMultipleByMatchIdStatements.add(statement);
-      return references;
+      return this.readMultipleByMatchIdStatements.useStatement(statement ->
+      {
+        statement.setInt(1, matchId);
+        return this.readMultipleWithPopulatedStatement(statement);
+      });
     }
     catch (ZeroRowsReturnedException e)
     {
@@ -62,10 +57,8 @@ public class MatchReferenceAccessor extends Accessor<MatchReference>
     }
     catch (Exception e)
     {
-      this.closeStatement(statement);
-      this.logAndReThrowUnexpectedException(
+      throw this.logAndCreateUnexpectedException(
           "Unexpected error when trying to read a " + this.entityClass.getSimpleName() + " with matchId " + matchId + " in accessor", e);
     }
-    return null;
   }
 }

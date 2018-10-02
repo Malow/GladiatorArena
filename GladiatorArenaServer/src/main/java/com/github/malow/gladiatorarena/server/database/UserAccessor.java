@@ -1,6 +1,5 @@
 package com.github.malow.gladiatorarena.server.database;
 
-import java.sql.PreparedStatement;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.malow.malowlib.database.Accessor;
@@ -8,6 +7,7 @@ import com.github.malow.malowlib.database.DatabaseConnection;
 import com.github.malow.malowlib.database.DatabaseExceptions.ForeignKeyException;
 import com.github.malow.malowlib.database.DatabaseExceptions.MissingMandatoryFieldException;
 import com.github.malow.malowlib.database.DatabaseExceptions.MultipleRowsReturnedException;
+import com.github.malow.malowlib.database.DatabaseExceptions.SimultaneousModificationException;
 import com.github.malow.malowlib.database.DatabaseExceptions.UnexpectedException;
 import com.github.malow.malowlib.database.DatabaseExceptions.UniqueException;
 import com.github.malow.malowlib.database.DatabaseExceptions.ZeroRowsReturnedException;
@@ -41,14 +41,14 @@ public class UserAccessor extends Accessor<User>
   }
 
   @Override
-  public void update(User user) throws ZeroRowsReturnedException, MultipleRowsReturnedException, UnexpectedException
+  public void update(User user) throws SimultaneousModificationException, MultipleRowsReturnedException, UnexpectedException
   {
     super.update(user);
     this.cacheByAccountId.put(user.accountId, user);
   }
 
   @Override
-  public void delete(Integer id) throws ZeroRowsReturnedException, MultipleRowsReturnedException, UnexpectedException
+  public void delete(Integer id) throws ZeroRowsReturnedException, MultipleRowsReturnedException, UnexpectedException, ForeignKeyException
   {
     User user = super.read(id);
     super.delete(id);
@@ -62,14 +62,14 @@ public class UserAccessor extends Accessor<User>
     {
       return user;
     }
-    PreparedStatement statement = null;
     try
     {
-      statement = this.readByAccountIdStatements.get();
-      statement.setInt(1, accountId);
-      user = this.readWithPopulatedStatement(statement);
+      user = this.readByAccountIdStatements.useStatement(statement ->
+      {
+        statement.setInt(1, accountId);
+        return this.readWithPopulatedStatement(statement);
+      });
       this.cacheByAccountId.put(user.accountId, user);
-      this.readByAccountIdStatements.add(statement);
       return user;
     }
     catch (ZeroRowsReturnedException e)
@@ -78,11 +78,9 @@ public class UserAccessor extends Accessor<User>
     }
     catch (Exception e)
     {
-      this.closeStatement(statement);
-      this.logAndReThrowUnexpectedException(
+      throw this.logAndCreateUnexpectedException(
           "Unexpected error when trying to read a " + this.entityClass.getSimpleName() + " with accountId " + accountId + " in accessor", e);
     }
-    return null;
   }
 
   public User readByGameToken(String gameToken)
