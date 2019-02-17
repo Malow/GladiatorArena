@@ -15,7 +15,7 @@ import com.github.malow.malowlib.database.PreparedStatementPool;
 
 public class UserAccessor extends Accessor<User>
 {
-  private ConcurrentHashMap<Integer, User> cacheByAccountId = new ConcurrentHashMap<Integer, User>();
+  private ConcurrentHashMap<Integer, User> cacheByAccountId = new ConcurrentHashMap<>();
   private PreparedStatementPool readByAccountIdStatements;
 
   public UserAccessor(DatabaseConnection databaseConnection)
