@@ -5,7 +5,7 @@ import com.github.malow.gladiatorarena.server.database.UserAccessorSingleton;
 import com.github.malow.malowlib.MaloWLogger;
 import com.github.malow.malowlib.malowprocess.MaloWProcess.ProcessState;
 import com.github.malow.malowlib.network.https.HttpRequestHandler;
-import com.github.malow.malowlib.network.https.HttpResponse;
+import com.github.malow.malowlib.network.https.JsonHttpResponse;
 import com.github.malow.malowlib.network.https.HttpTestRequest;
 
 public class TestHttpsHandlers
@@ -13,7 +13,7 @@ public class TestHttpsHandlers
   public static class ClearCacheHandler extends HttpRequestHandler<HttpTestRequest>
   {
     @Override
-    public HttpResponse handleRequestAndGetResponse(HttpTestRequest request)
+    public JsonHttpResponse handleRequestAndGetResponse(HttpTestRequest request)
     {
       UserAccessorSingleton.get().clearCache();
       MatchmakingEngineSingleton.get().clearQueue();
@@ -25,7 +25,7 @@ public class TestHttpsHandlers
   public static class WaitForEmptyMatchmakingEngine extends HttpRequestHandler<HttpTestRequest>
   {
     @Override
-    public HttpResponse handleRequestAndGetResponse(HttpTestRequest request)
+    public JsonHttpResponse handleRequestAndGetResponse(HttpTestRequest request)
     {
       long start = System.currentTimeMillis();
       while (MatchmakingEngineSingleton.get().getEventQueueSize() != 0 || MatchmakingEngineSingleton.get().getNumberOfPlayersInQueue() != 0

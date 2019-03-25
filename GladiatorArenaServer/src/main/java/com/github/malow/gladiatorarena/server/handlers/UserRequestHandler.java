@@ -56,7 +56,7 @@ public class UserRequestHandler
     }
     catch (ZeroRowsReturnedException e)
     {
-      MaloWLogger.info("GetMyInfo request from " + req.email + " failed due to no user existing for the acocunt.");
+      MaloWLogger.info("GetMyInfo request from " + req.email + " failed due to no user existing for the account.");
       return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
@@ -94,7 +94,7 @@ public class UserRequestHandler
     }
     catch (ZeroRowsReturnedException e)
     {
-      MaloWLogger.info("QueueMatchmaking request from " + req.email + " failed due to no user existing for the acocunt.");
+      MaloWLogger.info("QueueMatchmaking request from " + req.email + " failed due to no user existing for the account.");
       return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (UnexpectedException e)
@@ -125,7 +125,7 @@ public class UserRequestHandler
     }
     catch (ZeroRowsReturnedException e)
     {
-      MaloWLogger.info("UnqueueMatchmaking request from " + req.email + " failed due to no user existing for the acocunt.");
+      MaloWLogger.info("UnqueueMatchmaking request from " + req.email + " failed due to no user existing for the account.");
       return new ErrorResponse(false, ErrorMessages.NO_USER_FOUND);
     }
     catch (Exception e)
